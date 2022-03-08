@@ -434,7 +434,7 @@ SPDX-License-Identifier: MIT
     }
     encoder.setDecompositions(numDecompositionsToEncode);
     encoder.setBlockDimensions({ width: blockDimensions, height: blockDimensions });
-    encoder.setIsUsingColorTransform(decoder.getFrameInfo().componentCount === 3);
+    //encoder.setIsUsingColorTransform(decoder.getFrameInfo().componentCount === 3);
     encoder.setProgressionOrder(progressionOrder);
 
     // Do the encode
@@ -449,6 +449,14 @@ SPDX-License-Identifier: MIT
     $('#encodeTime').text((timePerFrame).toFixed(2) + ' ms (' + mps.toFixed(2) + " MP/s; " + fps.toFixed(0) + " fps)");
   }
 
+  function setEncoded(bitStream) {
+    fullEncodedBitStream = new Uint8Array(bitStream);
+    encodedBitStream = new Uint8Array(bitStream);
+    $('#encodedBytesRead').text('' + encodedBitStream.length.toLocaleString() + ' bytes');
+    $('#encodedBytesReadRange').attr('max', encodedBitStream.length - 1);
+    decode();
+  }
+
   function load(url) {
     fetch(url)
       .then((response) => {
@@ -456,11 +464,7 @@ SPDX-License-Identifier: MIT
       })
       .then((arrayBuffer) => {
         try {
-          fullEncodedBitStream = new Uint8Array(arrayBuffer);
-          encodedBitStream = new Uint8Array(arrayBuffer);
-          $('#encodedBytesRead').text('' + encodedBitStream.length.toLocaleString() + ' bytes');
-          $('#encodedBytesReadRange').attr('max', encodedBitStream.length - 1);
-          decode();
+          setEncoded(new Uint8Array(arrayBuffer));
           uncompressedImageFrame = new Uint8Array(decoder.getDecodedBuffer().length);
           uncompressedImageFrame.set(decoder.getDecodedBuffer());
         }
@@ -504,7 +508,7 @@ SPDX-License-Identifier: MIT
 
   Module.onRuntimeInitialized = async _ => {
     decoder = new Module.HTJ2KDecoder();
-    //encoder = new Module.HTJ2KEncoder();
+    encoder = new Module.HTJ2KEncoder();
 
     init('../../test/fixtures/j2c/CT1.j2c');
     //init('../../test/fixtures/j2c/MG1.j2c');
@@ -538,8 +542,7 @@ SPDX-License-Identifier: MIT
       encode(quantization);
       // Get the encoded bytes and display them
       const encodedBytes = encoder.getEncodedBuffer();
-      encodedBitStream = encodedBytes;
-      decode();
+      setEncoded(encodedBytes.slice(85))
     });
 
     $('#decompositionsSelector').change(function (e) {
@@ -547,8 +550,7 @@ SPDX-License-Identifier: MIT
       encode(quantization);
       // Get the encoded bytes and display them
       const encodedBytes = encoder.getEncodedBuffer();
-      encodedBitStream = encodedBytes;
-      decode();
+      setEncoded(encodedBytes.slice(85))
     });
 
     $('#blockDimensionsSelector').change(function (e) {
@@ -556,8 +558,7 @@ SPDX-License-Identifier: MIT
       encode(quantization);
       // Get the encoded bytes and display them
       const encodedBytes = encoder.getEncodedBuffer();
-      encodedBitStream = encodedBytes;
-      decode();
+      setEncoded(encodedBytes.slice(85))
     });
 
 
@@ -594,11 +595,12 @@ SPDX-License-Identifier: MIT
       }
       $('#quantization').text('' + quantization.toFixed(5));
       encode(quantization);
-      // Get the encoded bytes and display them
+
       const encodedBytes = encoder.getEncodedBuffer();
-      encodedBitStream = encodedBytes;
-      decode();
+      setEncoded(encodedBytes.slice(85))
     });
+
+
 
     // this function gets called once the user drops the file onto the div
     function handleFileSelect(evt) {
@@ -615,11 +617,7 @@ SPDX-License-Identifier: MIT
       fileReader.onload = function (e) {
         reset();
         var arrayBuffer = e.target.result;
-        fullEncodedBitStream = new Uint8Array(arrayBuffer);
-        encodedBitStream = new Uint8Array(arrayBuffer);
-        $('#encodedBytesRead').text('' + encodedBitStream.length.toLocaleString() + ' bytes');
-        $('#encodedBytesReadRange').attr('max', encodedBitStream.length - 1);
-        decode();
+        setEncoded(new Uint8Array(arrayBuffer));
         uncompressedImageFrame = new Uint8Array(decoder.getDecodedBuffer().length);
         uncompressedImageFrame.set(decoder.getDecodedBuffer());
       }

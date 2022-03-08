@@ -1,5 +1,5 @@
 #!/bin/sh
-rm -rf build
+#rm -rf build
 mkdir -p build
 #(cd build && emcmake cmake -DCMAKE_BUILD_TYPE=Debug ..)
 #(cd build && CXXFLAGS=-msimd128 emcmake cmake ..)

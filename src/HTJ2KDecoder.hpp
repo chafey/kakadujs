@@ -271,7 +271,7 @@ private:
     // Determine number of components to decompress
     kdu_core::kdu_dims dims;
     codestream.get_dims(0, dims);
-
+    
     int num_components = codestream.get_num_components();
     if (num_components == 2)
       num_components = 1;

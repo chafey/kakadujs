@@ -3,6 +3,7 @@
     "files.associations": {
         "limits": "cpp",
         "type_traits": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "functional": "cpp"
     }
 }
