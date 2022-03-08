@@ -9,6 +9,17 @@
 
 using namespace emscripten;
 
+static std::string getVersion()
+{
+  std::string version = KDU_CORE_VERSION;
+  return version;
+}
+
+EMSCRIPTEN_BINDINGS(charlsjs)
+{
+  function("getVersion", &getVersion);
+}
+
 EMSCRIPTEN_BINDINGS(FrameInfo)
 {
   value_object<FrameInfo>("FrameInfo")

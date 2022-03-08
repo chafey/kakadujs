@@ -15,14 +15,14 @@ SPDX-License-Identifier: MIT
 <body>
   <div class="container">
     <div class="page-header">
-      <h1>HTJ2K/JPH Decoding with WebAssembly using Kakadu 8_2_1</h1>
+      <h1>HTJ2K Decoding with WebAssembly using Kakadu <span id="version"></span></h1>
       <p class="lead">
-        Select an image or drag and drop a HTJ2K/JPH file. Files dropped here remain local in your browser, they are not
+        Select an image or drag and drop a HTJ2K/JPH file. Files dropped here remain local in your browser, they are
+        not
         uploaded anywhere.
       </p>
       <div class="row">
         <select id="imageSelector">
-          <option value="../../extern/OpenJPH/subprojects/js/html/test.j2c" selected>Lena</option>
           <option value="../../test/fixtures/j2c/CT1.j2c">CT1</option>
           <option value="../../test/fixtures/j2c/CT2.j2c">CT2</option>
           <option value="../../test/fixtures/j2c/MG1.j2c">MG1</option>
@@ -509,6 +509,7 @@ SPDX-License-Identifier: MIT
   Module.onRuntimeInitialized = async _ => {
     decoder = new Module.HTJ2KDecoder();
     encoder = new Module.HTJ2KEncoder();
+    $("#version").text(Module.getVersion())
 
     init('../../test/fixtures/j2c/CT1.j2c');
     //init('../../test/fixtures/j2c/MG1.j2c');
