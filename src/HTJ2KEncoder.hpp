@@ -3,22 +3,15 @@
 
 #pragma once
 
-#include <exception>
-#include <memory>
-
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <iostream>
-#include <fstream>
 // Kakadu core includes
 #include "kdu_elementary.h"
 #include "kdu_messaging.h"
 #include "kdu_params.h"
 #include "kdu_compressed.h"
 #include "kdu_sample_processing.h"
-#include "kdu_utils.h" // Access `kdu_memsafe_mul' etc. for safe mem calcs
+#include "kdu_utils.h"
 #include "jp2.h"
+
 // Application level includes
 #include "kdu_stripe_compressor.h"
 
@@ -117,12 +110,6 @@ public:
   std::vector<uint8_t> &getDecodedBytes(const FrameInfo &frameInfo)
   {
     frameInfo_ = frameInfo;
-    downSamples_.resize(frameInfo_.componentCount);
-    for (int c = 0; c < frameInfo_.componentCount; ++c)
-    {
-      downSamples_[c].x = 1;
-      downSamples_[c].y = 1;
-    }
     return decoded_;
   }
 
@@ -142,7 +129,6 @@ public:
   void setDecompositions(size_t decompositions)
   {
     decompositions_ = decompositions;
-    precincts_.resize(0);
   }
 
   /// <summary>
@@ -170,68 +156,11 @@ public:
   }
 
   /// <summary>
-  /// Sets the down sampling for component
-  /// </summary>
-  void setDownSample(size_t component, Point downSample)
-  {
-    downSamples_[component] = downSample;
-  }
-
-  /// <summary>
-  /// Sets the image offset
-  /// </summary>
-  void setImageOffset(Point imageOffset)
-  {
-    imageOffset_ = imageOffset;
-  }
-
-  /// <summary>
-  /// Sets the tile size
-  /// </summary>
-  void setTileSize(Size tileSize)
-  {
-    tileSize_ = tileSize;
-  }
-
-  /// <summary>
-  /// Sets the tile offset
-  /// </summary>
-  void setTileOffset(Point tileOffset)
-  {
-    tileOffset_ = tileOffset;
-  }
-
-  /// <summary>
   /// Sets the block dimensions
   /// </summary>
   void setBlockDimensions(Size blockDimensions)
   {
     blockDimensions_ = blockDimensions;
-  }
-
-  /// <summary>
-  /// Sets the number of precincts
-  /// </summary>
-  void setNumPrecincts(size_t numLevels)
-  {
-    precincts_.resize(numLevels);
-  }
-
-  /// <summary>
-  /// Sets the precinct for the specified level.  You must
-  /// call setNumPrecincts with the number of levels first
-  /// </summary>
-  void setPrecinct(size_t level, Size precinct)
-  {
-    precincts_[level] = precinct;
-  }
-
-  /// <summary>
-  /// Sets whether or not the color transform is used
-  /// </summary>
-  void setIsUsingColorTransform(bool isUsingColorTransform)
-  {
-    isUsingColorTransform_ = isUsingColorTransform;
   }
 
   /// <summary>
@@ -253,12 +182,58 @@ public:
     siz_ref->finalize();
 
     kdu_buffer_target target(encoded_);
+    kdu_supp::jp2_family_tgt tgt;
+    tgt.open(&target);
+    kdu_supp::jp2_target output;
+    output.open(&tgt);
+    kdu_supp::jp2_dimensions dims = output.access_dimensions();
+    dims.init(&siz);
+    kdu_supp::jp2_colour colr = output.access_colour();
+    colr.init((frameInfo_.componentCount == 3) ? kdu_supp::JP2_sRGB_SPACE : kdu_supp::JP2_sLUM_SPACE);
+    output.write_header();
+    output.open_codestream(true);
+
     kdu_core::kdu_codestream codestream;
-    codestream.create(&siz, &target);
+    codestream.create(&siz, &output);
 
     // Set up any specific coding parameters and finalize them.
-    codestream.access_siz()->parse_string("Creversible=yes");
     codestream.access_siz()->parse_string("Cmodes=HT");
+    char param[32];
+    if (lossless_)
+    {
+      codestream.access_siz()->parse_string("Creversible=yes");
+    }
+    else
+    {
+      codestream.access_siz()->parse_string("Creversible=no");
+      sprintf(param, "Qstep=%f", quantizationStep_);
+      codestream.access_siz()->parse_string(param);
+    }
+
+    switch (progressionOrder_)
+    {
+    case 0:
+      codestream.access_siz()->parse_string("Corder=LRCP");
+      break;
+    case 1:
+      codestream.access_siz()->parse_string("Corder=RLCP");
+      break;
+    case 2:
+      codestream.access_siz()->parse_string("Corder=RPCL");
+      break;
+    case 3:
+      codestream.access_siz()->parse_string("Corder=PCRL");
+      break;
+    case 4:
+      codestream.access_siz()->parse_string("Corder=CPRL");
+      break;
+    }
+
+    sprintf(param, "Clevels=%zu", decompositions_);
+    codestream.access_siz()->parse_string(param);
+
+    sprintf(param, "Cblk={%d,%d}", blockDimensions_.width, blockDimensions_.height);
+    codestream.access_siz()->parse_string(param);
 
     codestream.access_siz()->finalize_all(); // Set up coding defaults
 
@@ -289,6 +264,8 @@ public:
 
     // Finally, cleanup
     codestream.destroy();
+    tgt.close();
+    output.close();
     target.close();
   }
 
@@ -301,11 +278,5 @@ private:
   float quantizationStep_;
   size_t progressionOrder_;
 
-  std::vector<Point> downSamples_;
-  Point imageOffset_;
-  Size tileSize_;
-  Point tileOffset_;
   Size blockDimensions_;
-  std::vector<Size> precincts_;
-  bool isUsingColorTransform_;
 };

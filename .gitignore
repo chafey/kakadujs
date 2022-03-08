@@ -3,3 +3,4 @@ extern/v8_2_1-02044N
 build-native
 dist
 build
+test/fixtures/j2c/ignore.j2c

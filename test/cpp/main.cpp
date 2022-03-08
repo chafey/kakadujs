@@ -32,9 +32,6 @@ void readFile(std::string fileName, std::vector<uint8_t> &vec)
     vec.insert(vec.begin(),
                std::istream_iterator<uint8_t>(file),
                std::istream_iterator<uint8_t>());
-
-    // std::istreambuf_iterator iter(file);
-    // std::copy(iter.begin(), iter.end(), std::back_inserter(vec));
 }
 
 void writeFile(std::string fileName, const std::vector<uint8_t> &vec)
@@ -73,8 +70,6 @@ void decodeFile(const char *path, size_t iterations = 1)
     timespec start, finish, delta;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
     decoder.readHeader();
-    // Size resolutionAtLevel = decoder.calculateDecompositionLevel(1);
-    // std::cout << resolutionAtLevel.width << ',' << resolutionAtLevel.height << std::endl;
 
     for (int i = 0; i < iterations; i++)
     {
@@ -96,51 +91,58 @@ void decodeFile(const char *path, size_t iterations = 1)
     printf("Native-decode %s Pixels=%d megaPixels=%f TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", path, pixels, megaPixels, totalTimeMS, timePerFrameMS, mps, fps);
 }
 
-void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPath)
+void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPath = NULL, size_t iterations = 1)
 {
     HTJ2KEncoder encoder;
+    // encoder.setDecompositions(2);
+    // encoder.setQuality(false, 0.001f);
+    // encoder.setBlockDimensions(Size(16, 16));
+    // encoder.setProgressionOrder(0);
     std::vector<uint8_t> &rawBytes = encoder.getDecodedBytes(frameInfo);
 
     readFile(inPath, rawBytes);
 
-    /*
-        unsigned short *pOut = (unsigned short *)rawBytes.data();
-        for (int y = 0; y < frameInfo.height; y++)
-        {
-            for (int x = 0; x < frameInfo.width; x++)
-            {
-                *pOut++ = x;
-            }
-        }
-        */
-
     timespec start, finish, delta;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
 
-    encoder.encode();
+    for (int i = 0; i < iterations; i++)
+    {
+        encoder.encode();
+    }
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
     sub_timespec(start, finish, &delta);
-    const double ms = (double)(delta.tv_nsec) / 1000000.0;
 
-    printf("Encode of %s took %f ms\n", inPath, ms);
+    auto ns = delta.tv_sec * 1000000000.0 + delta.tv_nsec;
+    auto totalTimeMS = ns / 1000000.0;
+    auto timePerFrameMS = ns / 1000000.0 / (double)iterations;
+    auto pixels = (frameInfo.width * frameInfo.height);
+    auto megaPixels = (double)pixels / (1024.0 * 1024.0);
+    auto fps = 1000 / timePerFrameMS;
+    auto mps = (double)(megaPixels)*fps;
+
+    printf("Native-encode %s Pixels=%d megaPixels=%f TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", inPath, pixels, megaPixels, totalTimeMS, timePerFrameMS, mps, fps);
 
     if (outPath)
     {
         const std::vector<uint8_t> &encodedBytes = encoder.getEncodedBytes();
-        printf("encodedBytes.size() = %lu\n", encodedBytes.size());
+        // printf("encodedBytes.size() = %lu\n", encodedBytes.size());
         writeFile(outPath, encodedBytes);
     }
 }
 
 int main(int argc, char **argv)
 {
+    // warm up the decoder and encoder
+    decodeFile("test/fixtures/j2c/CT1.j2c", 1);
+    encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true});
+
     const size_t iterations = (argc > 1) ? atoi(argv[1]) : 1;
-    // decodeFile("test/fixtures/j2c/CT1.j2c", iterations);
-    //  decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
+    decodeFile("test/fixtures/j2c/CT1.j2c", iterations);
+    decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
     //   decodeFile("test/fixtures/j2c/CT2.j2c");
     //   decodeFile("test/fixtures/j2c/MG1.j2c");
 
-    encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/CT1zzz.j2c");
+    encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/ignore.j2c", iterations);
     return 0;
 }
