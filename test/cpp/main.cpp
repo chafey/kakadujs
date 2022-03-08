@@ -11,9 +11,6 @@
 #include "../../src/HTJ2KDecoder.hpp"
 #include "../../src/HTJ2KEncoder.hpp"
 
-
-
-
 void readFile(std::string fileName, std::vector<uint8_t> &vec)
 {
     // open the file:
@@ -94,7 +91,7 @@ void decodeFile(const char *path, size_t iterations = 1)
     auto pixels = (frameInfo.width * frameInfo.height);
     auto megaPixels = (double)pixels / (1024.0 * 1024.0);
     auto fps = 1000 / timePerFrameMS;
-    auto mps = (double)(megaPixels) * fps;
+    auto mps = (double)(megaPixels)*fps;
 
     printf("Native-decode %s Pixels=%d megaPixels=%f TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", path, pixels, megaPixels, totalTimeMS, timePerFrameMS, mps, fps);
 }
@@ -105,6 +102,17 @@ void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPa
     std::vector<uint8_t> &rawBytes = encoder.getDecodedBytes(frameInfo);
 
     readFile(inPath, rawBytes);
+
+    /*
+        unsigned short *pOut = (unsigned short *)rawBytes.data();
+        for (int y = 0; y < frameInfo.height; y++)
+        {
+            for (int x = 0; x < frameInfo.width; x++)
+            {
+                *pOut++ = x;
+            }
+        }
+        */
 
     timespec start, finish, delta;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
@@ -128,10 +136,10 @@ void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPa
 int main(int argc, char **argv)
 {
     const size_t iterations = (argc > 1) ? atoi(argv[1]) : 1;
-    //decodeFile("test/fixtures/j2c/CT1.j2c", iterations);
-    //decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
-    // decodeFile("test/fixtures/j2c/CT2.j2c");
-    // decodeFile("test/fixtures/j2c/MG1.j2c");
+    // decodeFile("test/fixtures/j2c/CT1.j2c", iterations);
+    //  decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
+    //   decodeFile("test/fixtures/j2c/CT2.j2c");
+    //   decodeFile("test/fixtures/j2c/MG1.j2c");
 
     encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/CT1zzz.j2c");
     return 0;

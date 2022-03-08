@@ -18,7 +18,7 @@
 #include "kdu_compressed.h"
 #include "kdu_sample_processing.h"
 #include "kdu_utils.h" // Access `kdu_memsafe_mul' etc. for safe mem calcs
-#include "jp2.h" 
+#include "jp2.h"
 // Application level includes
 #include "kdu_stripe_compressor.h"
 
@@ -28,26 +28,27 @@
 
 #include "FrameInfo.hpp"
 
+class kdu_buffer_target : public kdu_core::kdu_compressed_target
+{
+public: // Member functions
+  kdu_buffer_target(std::vector<uint8_t> &encoded) : encoded_(encoded)
+  {
+    encoded_.resize(0);
+  }
+  ~kdu_buffer_target() { return; } // Destructor must be virtual
+  int get_capabilities() { return KDU_TARGET_CAP_CACHED; }
+  bool write(const kdu_core::kdu_byte *buf, int num_bytes)
+  {
+    const size_t size = encoded_.size();
+    encoded_.resize(size + num_bytes);
 
-class kdu_buffer_target : public kdu_core::kdu_compressed_target {
-    public: // Member functions
-    kdu_buffer_target(std::vector<uint8_t>& encoded) :encoded_(encoded) {
-      encoded_.resize(0);
-    }
-    ~kdu_buffer_target() { return; } // Destructor must be virtual
-    int get_capabilities() { return KDU_TARGET_CAP_CACHED; }
-    bool write(const kdu_core::kdu_byte *buf, int num_bytes) { 
-      printf("num_bytes=%d\n", num_bytes);
-      const size_t size = encoded_.size();
-      printf("encoded.size()=%zu\n", size);
-      encoded_.resize(size + num_bytes);
+    memcpy(encoded_.data() + size, buf, num_bytes);
+    return true;
+  }
 
-      memcpy(encoded_.data() + size, buf, num_bytes);
-      return true; 
-    }
-  private: // Data
-    std::vector<uint8_t>& encoded_;
-  };
+private: // Data
+  std::vector<uint8_t> &encoded_;
+};
 
 /// <summary>
 /// JavaScript API for encoding images to HTJ2K bitstreams with OpenJPH
@@ -85,8 +86,6 @@ public:
     frameInfo_ = frameInfo;
     const size_t bytesPerPixel = (frameInfo_.bitsPerSample + 8 - 1) / 8;
     const size_t decodedSize = frameInfo_.width * frameInfo_.height * frameInfo_.componentCount * bytesPerPixel;
-    printf("decodedSize=%lu\n", decodedSize)
-    printf("bytesPerPixel=%lu\n", bytesPerPixel)
     downSamples_.resize(frameInfo_.componentCount);
     for (int c = 0; c < frameInfo_.componentCount; ++c)
     {
@@ -243,121 +242,54 @@ public:
   /// </summary>
   void encode()
   {
-    //int num_components=0, height, width;
-    printf("decoded_.size()=%lu\n", decoded_.size());
-    // Construct code-stream object
+    //  Construct code-stream object
     kdu_core::siz_params siz;
-    siz.set(Scomponents,0,0,frameInfo_.componentCount);
-    siz.set(Sdims,0,0,frameInfo_.height);  // Height of first image component
-    siz.set(Sdims,0,1,frameInfo_.width);   // Width of first image component
-    siz.set(Sprecision,0,0,frameInfo_.bitsPerSample);  // Image samples have original bit-depth of 8
-    siz.set(Ssigned,0,0,frameInfo_.isSigned); // Image samples are originally unsigned
-    kdu_core::kdu_params *siz_ref = &siz; siz_ref->finalize();
+    siz.set(Scomponents, 0, 0, frameInfo_.componentCount);
+    siz.set(Sdims, 0, 0, frameInfo_.height);
+    siz.set(Sdims, 0, 1, frameInfo_.width);
+    siz.set(Sprecision, 0, 0, frameInfo_.bitsPerSample);
+    siz.set(Ssigned, 0, 0, frameInfo_.isSigned);
+    kdu_core::kdu_params *siz_ref = &siz;
+    siz_ref->finalize();
 
-
-      // Finalizing the siz parameter object will fill in the myriad SIZ
-      // parameters we have not explicitly specified in this simple example.
-      // The capabilities of the finalization process are documented in
-      // "kdu_params.h".  Note that we execute the virtual member function
-      // through a pointer, since the address of the function is not explicitly
-      // exported by the core DLL (minimizes the export table).
-    kdu_buffer_target target(encoded_); // Can also use `kdu_simple_file_target'
-    kdu_supp::jp2_family_tgt tgt;
-    tgt.open(&target);
-    kdu_supp::jp2_target output;
-    output.open(&tgt);
-    kdu_supp::jp2_dimensions dims = output.access_dimensions(); dims.init(&siz);
-    kdu_supp::jp2_colour colr = output.access_colour();
-    //colr.init( (frameInfo_.componentCount==3) ? kdu_supp::JP2_sRGB_SPACE : kdu_supp::JP2_bilevel1_SPACE);
-    colr.init(kdu_supp::JP2_sLUM_SPACE);
-    output.write_header();
-    output.open_codestream(true);
-
-      // As an alternative to raw code-stream output, you may wish to wrap
-      // the code-stream in a JP2/JPH file, which then allows you to add a
-      // additional information concerning the colour and geometric properties
-      // of the image, all of which should be respected by conforming readers.
-      // To do this, include "jp2.h" and declare "output" to be of class
-      // `jp2_target' instead of `kdu_simple_file_target' or
-      // `kdu_platform_file_target'.  Rather than opening the `jp2_target'
-      // object directly, you first create a `jp2_family_tgt' object, using
-      // it to open the file to which you want to write, and then pass it to
-      // `jp2_target::open'.  At a minimum, you must execute the following
-      // additional configuration steps to create a JP2 file:
-      //     jp2_dimensions dims = output.access_dimensions(); dims.init(&siz);
-      //     jp2_colour colr = output.access_colour();
-      //     colr.init((num_components==3)?:JP2_sRGB_SPACE:JP2_sLUM_SPACE);
-      // Of course, there is a lot more you can do with JP2/JPH files.  Read the
-      // interface descriptions in "jp2.h" and/or take a look at the more
-      // sophisticated demonstration in "kdu_compress.cpp".  A simple
-      // demonstration appears also in "kdu_buffered_compress.cpp".
-      //    A common question is how you can get the compressed data written
-      // out to a memory buffer, instead of a file.  To do this, simply
-      // derive a memory buffering object from the abstract base class,
-      // `kdu_compressed_target' and pass this into `kdu_codestream::create'.
-      // If you want a memory resident JP2/JPH file, pass your memory-buffered
-      // `kdu_compressed_target' object to the second form of the overloaded
-      // `jp2_family_tgt::open' function and proceed as before.
-    kdu_core::kdu_codestream codestream; codestream.create(&siz,&output);
+    kdu_buffer_target target(encoded_);
+    kdu_core::kdu_codestream codestream;
+    codestream.create(&siz, &target);
 
     // Set up any specific coding parameters and finalize them.
-    //codestream.access_siz()->parse_string("Clayers=12");
-    //codestream.access_siz()->parse_string("Creversible=yes -jp2_space sLUM Clayers=16 Cycc=no");
-    //codestream.access_siz()->parse_string("Creversible=yes -jp2_space sLUM Cycc=no");
     codestream.access_siz()->parse_string("Creversible=yes");
-    //codestream.access_siz()->parse_string("Cycc=no");
-    //codestream.access_siz()->parse_string("-grey_weights");
-    //codestream.access_siz()->parse_string("Cmodes=HT");
-
-    //codestream.access_siz()->parse_string("Cmodes=HT");
-    //codestream.access_siz()->parse_string("-grey_weights");
-      // Other suggestions:
-      // 1) Instead of "Creversible=yes", you could do lossy compression with a
-      //    quality factor (similar to JPEG), using for example,
-      //      codestream.access_siz()->parse_string("Qfactor=85");
-      //      codestream.access_siz()->parse_string("Ctype=Y,Cb,Cr,N");
-      //    for more details on how to set `Ctype' (component-type), see the
-      //    `check_and_set_default_component_types' in "kdu_buffered_compress".
-      // 2) Both with "Creversible=yes" or without it, and both with `Qfactor'
-      //    or without it, you can specify the maximum size of the compressed
-      //    result (or indeed of any or all quality layers) by passing this
-      //    information to `compressor.start' below, via its optional arguments.
-      //    If you do this, it is always a good idea to set `Ctype', since this
-      //    allows Kakadu to perform visual optimization based on the component
-      //    type, avoiding visual weighting of components whose type is "N"
-      //    (non-visual).
-      // 3) While `kdu_params::parse_string' is a simple and convenient function
-      //    for accessing Kakadu's extensive parameter sub-system, you can
-      //    directly set parameter values instead, using the
-      //    `kdu_params::access_cluster', `kdu_params::access_relation' and
-      //    `kdu_params::set' functions -- this relies upon knowing the cluster
-      //    to which each parameter attribute belongs, as documented in
-      //    "kdu_params.h" or by following the classes derived from `kdu_params'
-      //    in Kakadu's auto-generated documentation system.
+    codestream.access_siz()->parse_string("Cmodes=HT");
 
     codestream.access_siz()->finalize_all(); // Set up coding defaults
 
     // Now compress the image in one hit, using `kdu_stripe_compressor'
     kdu_supp::kdu_stripe_compressor compressor;
     compressor.start(codestream);
-    int stripe_heights[3]={frameInfo_.height,frameInfo_.height,frameInfo_.height};
-    compressor.push_stripe(decoded_.data(),stripe_heights);
+    int stripe_heights[3] = {frameInfo_.height, frameInfo_.height, frameInfo_.height};
+    if (frameInfo_.bitsPerSample <= 8)
+    {
+      compressor.push_stripe(
+          decoded_.data(),
+          stripe_heights);
+    }
+    else
+    {
+      bool is_signed[3] = {frameInfo_.isSigned, frameInfo_.isSigned, frameInfo_.isSigned};
+      int precisions[3] = {frameInfo_.bitsPerSample, frameInfo_.bitsPerSample, frameInfo_.bitsPerSample};
+      compressor.push_stripe(
+          (kdu_core::kdu_int16 *)decoded_.data(),
+          stripe_heights,
+          NULL,
+          NULL,
+          NULL,
+          precisions,
+          is_signed);
+    }
     compressor.finish();
-      // As an alternative to the above, you can read the image samples in
-      // smaller stripes, calling `compressor.push_stripe' after each stripe.
-      // Note that the `kdu_stripe_compressor' object can be used to realize
-      // a wide range of Kakadu compression features, while supporting a wide
-      // range of different application-selected stripe buffer configurations
-      // precisions and bit-depths.  When developing your Kakadu-based
-      // compression application, be sure to read through the extensive
-      // documentation provided for this object.  For a much richer demonstration
-      // of the use of `kdu_stripe_compressor', take a look at the
-      // "kdu_buffered_compress" application.
 
     // Finally, cleanup
-    codestream.destroy(); // All done: simple as that.
-    tgt.close();
-    output.close(); // Not really necessary here.
+    codestream.destroy();
+    target.close();
   }
 
 private:
