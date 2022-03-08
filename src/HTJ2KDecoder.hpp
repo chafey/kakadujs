@@ -92,7 +92,8 @@ public:
     kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
     kdu_core::kdu_codestream codestream;
     codestream.create(&input);
-    codestream.set_fussy(); // Set the parsing error tolerance.
+    // codestream.set_resilient();
+    // codestream.set_fussy(); // Set the parsing error tolerance.
 
     // Determine number of components to decompress -- simple app only writes PNM
     kdu_core::kdu_dims dims;
@@ -118,7 +119,7 @@ public:
     frameInfo_.bitsPerSample = codestream.get_bit_depth(0);
     frameInfo_.isSigned = codestream.get_signed(0);
     codestream.destroy();
-    input.close(); // Not really necessary here.
+    input.close();
   }
 
   /// <summary>
@@ -271,7 +272,7 @@ private:
     // Determine number of components to decompress
     kdu_core::kdu_dims dims;
     codestream.get_dims(0, dims);
-    
+
     int num_components = codestream.get_num_components();
     if (num_components == 2)
       num_components = 1;
@@ -306,6 +307,15 @@ private:
     int stripe_heights[3] = {dims.size.y, dims.size.y, dims.size.y};
     decompressor.pull_stripe((kdu_core::kdu_int16 *)buffer, stripe_heights);
     decompressor.finish();
+
+    kdu_core::siz_params *siz = codestream.access_siz();
+    kdu_core::kdu_params *cod = siz->access_cluster(COD_params);
+    // printf("cod=%p\n", cod);
+    cod->get(Clevels, 0, 0, (int &)numDecompositions_);
+    cod->get(Corder, 0, 0, (int &)progressionOrder_);
+    cod->get(Creversible, 0, 0, isReversible_);
+    cod->get(Cblk, 0, 0, (int &)blockDimensions_.height);
+    cod->get(Cblk, 0, 1, (int &)blockDimensions_.width);
 
     // Write image buffer to file and clean up
     codestream.destroy();

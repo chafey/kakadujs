@@ -4,3 +4,4 @@ build-native
 dist
 build
 test/fixtures/j2c/ignore.j2c
+.DS_Store
