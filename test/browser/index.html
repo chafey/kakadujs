@@ -70,9 +70,6 @@ SPDX-License-Identifier: MIT
       <div class="col-md-4">Dynamic Range: <span id="dynamicRange"></span></div>
     </div>
     <div class="row">
-      <div class="col-md-4">Image Offset: <span id="imageOffset"></span></div>
-      <div class="col-md-4">Tile Size: <span id="tileSize"></span></div>
-      <div class="col-md-4">Tile Offset: <span id="tileOffset"></span></div>
     </div>
     <div class="row">
       <div class="col-md-4">Decompositions: <span id="numDecompositions"></span></div>
@@ -81,14 +78,12 @@ SPDX-License-Identifier: MIT
     </div>
     <div class="row">
       <div class="col-md-4">Progression Order: <span id="progessionOrder"></span></div>
-      <div class="col-md-4">Num Layers: <span id="numLayers"></span></div>
       <div class="col-md-4">Color Transform: <span id="colorTransform"></span></div>
     </div>
     <div class="row">
       <div class="col-md-12">Downsampling: <span id="downSampling"></span></div>
     </div>
     <div class="row">
-      <div class="col-md-12">Precincts: <span id="precincts"></span></div>
     </div>
     <div class="row">
       <div class="col-md-12">Sub Resolutions: <span id="subResolutions"></span></div>
@@ -382,9 +377,6 @@ SPDX-License-Identifier: MIT
     $('#pixelFormat').text('' + frameInfo.bitsPerSample + ' bpp ' + (frameInfo.isSigned ? 'signed' : 'unsigned'));
     $('#componentCount').text('' + frameInfo.componentCount);
 
-    $('#imageOffset').text('' + decoder.getImageOffset().x + ',' + decoder.getImageOffset().y);
-    $('#tileSize').text('' + decoder.getTileSize().width + 'x' + decoder.getTileSize().height);
-    $('#tileOffset').text('' + decoder.getTileOffset().x + ',' + decoder.getTileOffset().y);
     let downSamplings = '';
     for (let i = 0; i < frameInfo.componentCount; i++) {
       downSamplings += decoder.getDownSample(i).x + ',' + decoder.getDownSample(i).y + ' ';
@@ -394,12 +386,6 @@ SPDX-License-Identifier: MIT
     $('#numDecompositions').text('' + decoder.getNumDecompositions());
     $('#blockDimensions').text('' + decoder.getBlockDimensions().width + 'x' + decoder.getBlockDimensions().height);
     $('#reversible').text('' + decoder.getIsReversible());
-    let precints = '';
-    for (let i = 0; i < decoder.getNumDecompositions(); i++) {
-      precints += decoder.getPrecinct(i).width + 'x' + decoder.getPrecinct(i).height + ' ';
-    }
-    $('#precincts').text('' + precints);
-    $('#numLayers').text('' + decoder.getNumLayers());
     $('#colorTransform').text('' + decoder.getIsUsingColorTransform());
 
     $('#progessionOrder').text(['LRCP', 'RLCP', 'RPCL', 'PCRL', 'CPRL'][decoder.getProgressionOrder()]);

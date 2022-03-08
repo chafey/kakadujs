@@ -206,51 +206,11 @@ public:
   }
 
   /// <summary>
-  /// returns the image offset
-  /// </summary>
-  Point getImageOffset() const
-  {
-    return imageOffset_;
-  }
-
-  /// <summary>
-  /// returns the tile size
-  /// </summary>
-  Size getTileSize() const
-  {
-    return tileSize_;
-  }
-
-  /// <summary>
-  /// returns the tile offset
-  /// </summary>
-  Point getTileOffset() const
-  {
-    return tileOffset_;
-  }
-
-  /// <summary>
   /// returns the block dimensions
   /// </summary>
   Size getBlockDimensions() const
   {
     return blockDimensions_;
-  }
-
-  /// <summary>
-  /// returns the precinct for the specified resolution decomposition level
-  /// </summary>
-  Size getPrecinct(size_t level) const
-  {
-    return precincts_[level];
-  }
-
-  /// <summary>
-  /// returns the number of layers
-  /// </summary>
-  int32_t getNumLayers() const
-  {
-    return numLayers_;
   }
 
   /// <summary>
@@ -267,7 +227,7 @@ private:
     kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
     kdu_core::kdu_codestream codestream;
     codestream.create(&input);
-    codestream.set_fussy(); // Set the parsing error tolerance.
+    // codestream.set_fussy(); // Set the parsing error tolerance.
 
     // Determine number of components to decompress
     kdu_core::kdu_dims dims;
@@ -293,6 +253,15 @@ private:
     frameInfo_.bitsPerSample = codestream.get_bit_depth(0);
     frameInfo_.isSigned = codestream.get_signed(0);
 
+    kdu_core::siz_params *siz = codestream.access_siz();
+    kdu_core::kdu_params *cod = siz->access_cluster(COD_params);
+    // printf("cod=%p\n", cod);
+    cod->get(Clevels, 0, 0, (int &)numDecompositions_);
+    cod->get(Corder, 0, 0, (int &)progressionOrder_);
+    cod->get(Creversible, 0, 0, isReversible_);
+    cod->get(Cblk, 0, 0, (int &)blockDimensions_.height);
+    cod->get(Cblk, 0, 1, (int &)blockDimensions_.width);
+
     size_t bytesPerPixel = (frameInfo_.bitsPerSample + 1) / 8;
 
     // Now decompress the image in one hit, using `kdu_stripe_decompressor'
@@ -308,15 +277,6 @@ private:
     decompressor.pull_stripe((kdu_core::kdu_int16 *)buffer, stripe_heights);
     decompressor.finish();
 
-    kdu_core::siz_params *siz = codestream.access_siz();
-    kdu_core::kdu_params *cod = siz->access_cluster(COD_params);
-    // printf("cod=%p\n", cod);
-    cod->get(Clevels, 0, 0, (int &)numDecompositions_);
-    cod->get(Corder, 0, 0, (int &)progressionOrder_);
-    cod->get(Creversible, 0, 0, isReversible_);
-    cod->get(Cblk, 0, 0, (int &)blockDimensions_.height);
-    cod->get(Cblk, 0, 1, (int &)blockDimensions_.width);
-
     // Write image buffer to file and clean up
     codestream.destroy();
     input.close(); // Not really necessary here.
@@ -329,11 +289,6 @@ private:
   size_t numDecompositions_;
   bool isReversible_;
   size_t progressionOrder_;
-  Point imageOffset_;
-  Size tileSize_;
-  Point tileOffset_;
   Size blockDimensions_;
-  std::vector<Size> precincts_;
-  int32_t numLayers_;
   bool isUsingColorTransform_;
 };

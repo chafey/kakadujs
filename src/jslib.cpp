@@ -59,12 +59,7 @@ EMSCRIPTEN_BINDINGS(HTJ2KDecoder)
       .function("getNumDecompositions", &HTJ2KDecoder::getNumDecompositions)
       .function("getIsReversible", &HTJ2KDecoder::getIsReversible)
       .function("getProgressionOrder", &HTJ2KDecoder::getProgressionOrder)
-      .function("getImageOffset", &HTJ2KDecoder::getImageOffset)
-      .function("getTileSize", &HTJ2KDecoder::getTileSize)
-      .function("getTileOffset", &HTJ2KDecoder::getTileOffset)
       .function("getBlockDimensions", &HTJ2KDecoder::getBlockDimensions)
-      .function("getPrecinct", &HTJ2KDecoder::getPrecinct)
-      .function("getNumLayers", &HTJ2KDecoder::getNumLayers)
       .function("getIsUsingColorTransform", &HTJ2KDecoder::getIsUsingColorTransform);
 }
 

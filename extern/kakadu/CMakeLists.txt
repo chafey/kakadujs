@@ -73,10 +73,6 @@ set(APP_SUPPORT_SOURCES
     "${KAKADU_ROOT}/apps/jp2/jp2.cpp"
 )
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -arch x86_64")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DKDU_NO_THREADS")
-
 if(KAKADU_INTEL_SIMD)
     set(SSSE3_SOURCES
         "${KAKADU_ROOT}/coresys/coding/ssse3_coder_local.cpp" 
