@@ -21,8 +21,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function -Wno-return-t
 
 if(EMSCRIPTEN)
   SET(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
-  # -msimd128 causes errors with -O2 and above
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128")
   option(KAKADU_INTEL_SIMD "" OFF)
 else()
   set(CMAKE_CXX_FLAGS "-DNDEBUG -Ofast -fPIC -arch x86_64")
