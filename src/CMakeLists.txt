@@ -19,17 +19,17 @@ if(EMSCRIPTEN)
       kakadujs 
       PROPERTIES 
       LINK_FLAGS "\
-        --bind \
+        -O3 \
+        -lembind \
         -s DISABLE_EXCEPTION_CATCHING=1 \
         -s ASSERTIONS=0 \
         -s NO_EXIT_RUNTIME=1 \
         -s MALLOC=emmalloc \
         -s ALLOW_MEMORY_GROWTH=1 \
-        -s TOTAL_MEMORY=536870912 \
+        -s INITIAL_MEMORY=50MB \
         -s FILESYSTEM=0 \
         -s EXPORTED_FUNCTIONS=[] \
         -s EXPORTED_RUNTIME_METHODS=[ccall] \
     ")
-    #        -s WASM_BIGINT \
 
 endif()

@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project (kakadujs
-  LANGUAGES CXX)
+project (kakadujs LANGUAGES CXX)
 
 # set the build type if not specified
 set(default_build_type "Release")
@@ -10,7 +9,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "${default_build_type}")
 endif()
 
-# use kakadu fast block decoding
+# use kakadu fast block coder
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFBC_ENABLED")
 
 # turn off threading
@@ -28,8 +27,10 @@ else()
 option(KAKADU_INTEL_SIMD "" ON)
 endif()
 
+# TODO: Update to the location of your Kakadu source code
 set(KAKADU_ROOT "${CMAKE_SOURCE_DIR}/extern/v8_2_1-02044N")
 
+# BUILD_SHARED_LIBS must be OFF for EMSCRIPTEN builds
 option(BUILD_SHARED_LIBS "" OFF)
 
 # add the external library
