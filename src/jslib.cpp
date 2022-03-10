@@ -60,7 +60,8 @@ EMSCRIPTEN_BINDINGS(HTJ2KDecoder)
       .function("getIsReversible", &HTJ2KDecoder::getIsReversible)
       .function("getProgressionOrder", &HTJ2KDecoder::getProgressionOrder)
       .function("getBlockDimensions", &HTJ2KDecoder::getBlockDimensions)
-      .function("getIsUsingColorTransform", &HTJ2KDecoder::getIsUsingColorTransform);
+      .function("getIsUsingColorTransform", &HTJ2KDecoder::getIsUsingColorTransform)
+      .function("getIsHTEnabled", &HTJ2KDecoder::getIsHTEnabled);
 }
 
 EMSCRIPTEN_BINDINGS(HTJ2KEncoder)
@@ -73,5 +74,6 @@ EMSCRIPTEN_BINDINGS(HTJ2KEncoder)
       .function("setDecompositions", &HTJ2KEncoder::setDecompositions)
       .function("setQuality", &HTJ2KEncoder::setQuality)
       .function("setProgressionOrder", &HTJ2KEncoder::setProgressionOrder)
-      .function("setBlockDimensions", &HTJ2KEncoder::setBlockDimensions);
+      .function("setBlockDimensions", &HTJ2KEncoder::setBlockDimensions)
+      .function("setHTEnabled", &HTJ2KEncoder::setHTEnabled);
 }

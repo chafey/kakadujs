@@ -79,6 +79,7 @@ SPDX-License-Identifier: MIT
     <div class="row">
       <div class="col-md-4">Progression Order: <span id="progessionOrder"></span></div>
       <div class="col-md-4">Color Transform: <span id="colorTransform"></span></div>
+      <div class="col-md-4">HT Enabled: <span id="htEnabled"></span></div>
     </div>
     <div class="row">
       <div class="col-md-12">Downsampling: <span id="downSampling"></span></div>
@@ -391,6 +392,9 @@ SPDX-License-Identifier: MIT
     $('#progessionOrder').text(['LRCP', 'RLCP', 'RPCL', 'PCRL', 'CPRL'][decoder.getProgressionOrder()]);
     progressionOrder = decoder.getProgressionOrder();
 
+    htEnabled = decoder.getIsHTEnabled()
+    console.log('htEnabled=', htEnabled)
+    $('#htEnabled').text(htEnabled ? "Yes" : "No")
     // Display Image
     var decodedBuffer = decoder.getDecodedBuffer();
     $('#decodedSize').text('' + decodedBuffer.length.toLocaleString() + " bytes");

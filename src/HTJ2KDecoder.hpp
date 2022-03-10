@@ -90,37 +90,9 @@ public:
   /// </summary>
   void readHeader()
   {
-    // kdu_supp::jp2_family_src jp2_ultimate_src;
-
     kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
     kdu_core::kdu_codestream codestream;
-    codestream.create(&input);
-    // codestream.set_resilient();
-    // codestream.set_fussy(); // Set the parsing error tolerance.
-
-    // Determine number of components to decompress -- simple app only writes PNM
-    kdu_core::kdu_dims dims;
-    codestream.get_dims(0, dims);
-
-    int num_components = codestream.get_num_components();
-    if (num_components == 2)
-      num_components = 1;
-    else if (num_components >= 3)
-    { // Check that components have consistent dimensions (for PPM file)
-      num_components = 3;
-      kdu_core::kdu_dims dims1;
-      codestream.get_dims(1, dims1);
-      kdu_core::kdu_dims dims2;
-      codestream.get_dims(2, dims2);
-      if ((dims1 != dims) || (dims2 != dims))
-        num_components = 1;
-    }
-    codestream.apply_input_restrictions(0, num_components, 0, 0, NULL);
-    frameInfo_.width = dims.size.x;
-    frameInfo_.height = dims.size.y;
-    frameInfo_.componentCount = num_components;
-    frameInfo_.bitsPerSample = codestream.get_bit_depth(0);
-    frameInfo_.isSigned = codestream.get_signed(0);
+    readHeader_(codestream, input);
     codestream.destroy();
     input.close();
   }
@@ -149,7 +121,12 @@ public:
   /// </summary>
   void decode()
   {
-    decode_(0);
+    kdu_core::kdu_codestream codestream;
+    kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
+    readHeader_(codestream, input);
+    decode_(codestream, input, 0);
+    codestream.destroy();
+    input.close();
   }
 
   /// <summary>
@@ -160,7 +137,12 @@ public:
   /// </summary>
   void decodeSubResolution(size_t decompositionLevel)
   {
-    decode_(decompositionLevel);
+    kdu_core::kdu_codestream codestream;
+    kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
+    readHeader_(codestream, input);
+    decode_(codestream, input, decompositionLevel);
+    codestream.destroy();
+    input.close();
   }
 
   /// <summary>
@@ -224,12 +206,19 @@ public:
     return isUsingColorTransform_;
   }
 
-private:
-  void decode_(size_t decompositionLevel)
+  /// <summary>
+  /// returns whether or not HT encoding was used
+  /// </summary>
+  bool getIsHTEnabled() const
   {
-    kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
-    kdu_core::kdu_codestream codestream;
+    return isHTEnabled_;
+  }
+
+private:
+  void readHeader_(kdu_core::kdu_codestream &codestream, kdu_core::kdu_compressed_source_buffered &input)
+  {
     codestream.create(&input);
+    // codestream.set_resilient();
     // codestream.set_fussy(); // Set the parsing error tolerance.
 
     // Determine number of components to decompress
@@ -240,7 +229,7 @@ private:
     if (num_components == 2)
       num_components = 1;
     else if (num_components >= 3)
-    { // Check that components have consistent dimensions (for PPM file)
+    { // Check that components have consistent dimensions
       num_components = 3;
       kdu_core::kdu_dims dims1;
       codestream.get_dims(1, dims1);
@@ -255,7 +244,10 @@ private:
     frameInfo_.componentCount = num_components;
     frameInfo_.bitsPerSample = codestream.get_bit_depth(0);
     frameInfo_.isSigned = codestream.get_signed(0);
+  }
 
+  void decode_(kdu_core::kdu_codestream &codestream, kdu_core::kdu_compressed_source_buffered &input, size_t decompositionLevel)
+  {
     kdu_core::siz_params *siz = codestream.access_siz();
     kdu_core::kdu_params *cod = siz->access_cluster(COD_params);
     // printf("cod=%p\n", cod);
@@ -265,24 +257,21 @@ private:
     cod->get(Cblk, 0, 0, (int &)blockDimensions_.height);
     cod->get(Cblk, 0, 1, (int &)blockDimensions_.width);
 
+    isHTEnabled_ = codestream.get_ht_usage();
     size_t bytesPerPixel = (frameInfo_.bitsPerSample + 1) / 8;
 
     // Now decompress the image in one hit, using `kdu_stripe_decompressor'
-    size_t num_samples = kdu_core::kdu_memsafe_mul(num_components,
-                                                   kdu_core::kdu_memsafe_mul(dims.size.x,
-                                                                             dims.size.y));
+    size_t num_samples = kdu_core::kdu_memsafe_mul(frameInfo_.componentCount,
+                                                   kdu_core::kdu_memsafe_mul(frameInfo_.width,
+                                                                             frameInfo_.height));
     decoded_.resize(num_samples * bytesPerPixel);
 
     kdu_core::kdu_byte *buffer = decoded_.data();
     kdu_supp::kdu_stripe_decompressor decompressor;
     decompressor.start(codestream);
-    int stripe_heights[3] = {dims.size.y, dims.size.y, dims.size.y};
+    int stripe_heights[3] = {frameInfo_.height, frameInfo_.height, frameInfo_.height};
     decompressor.pull_stripe((kdu_core::kdu_int16 *)buffer, stripe_heights);
     decompressor.finish();
-
-    // Write image buffer to file and clean up
-    codestream.destroy();
-    input.close(); // Not really necessary here.
   }
 
   std::vector<uint8_t> encoded_;
@@ -294,4 +283,5 @@ private:
   size_t progressionOrder_;
   Size blockDimensions_;
   bool isUsingColorTransform_;
+  bool isHTEnabled_;
 };

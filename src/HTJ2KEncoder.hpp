@@ -55,7 +55,8 @@ public:
                    lossless_(true),
                    quantizationStep_(-1.0),
                    progressionOrder_(2), // RPCL
-                   blockDimensions_(64, 64)
+                   blockDimensions_(64, 64),
+                   htEnabled_(true)
   {
   }
 
@@ -156,6 +157,14 @@ public:
   }
 
   /// <summary>
+  /// Sets HT encoding
+  /// </summary>
+  void setHTEnabled(bool htEnabled)
+  {
+    htEnabled_ = htEnabled;
+  }
+
+  /// <summary>
   /// Executes an HTJ2K encode using the data in the source buffer.  The
   /// JavaScript code must copy the source image frame into the source
   /// buffer before calling this method.  See documentation on getSourceBytes()
@@ -193,7 +202,10 @@ public:
     codestream.create(&siz, &output);
 
     // Set up any specific coding parameters and finalize them.
-    codestream.access_siz()->parse_string("Cmodes=HT");
+    if (htEnabled_)
+    {
+      codestream.access_siz()->parse_string("Cmodes=HT");
+    }
     char param[32];
     if (lossless_)
     {
@@ -272,6 +284,6 @@ private:
   bool lossless_;
   float quantizationStep_;
   size_t progressionOrder_;
-
   Size blockDimensions_;
+  bool htEnabled_;
 };
