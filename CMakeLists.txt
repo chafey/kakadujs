@@ -23,8 +23,8 @@ if(EMSCRIPTEN)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128")
   option(KAKADU_INTEL_SIMD "" OFF)
 else()
-  set(CMAKE_CXX_FLAGS "-DNDEBUG -Ofast -fPIC -arch x86_64")
-option(KAKADU_INTEL_SIMD "" ON)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNDEBUG -Ofast -fPIC -arch x86_64")
+  option(KAKADU_INTEL_SIMD "" ON)
 endif()
 
 # TODO: Update to the location of your Kakadu source code

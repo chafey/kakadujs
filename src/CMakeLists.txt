@@ -3,17 +3,6 @@ if(EMSCRIPTEN)
   add_executable(kakadujs ${SOURCES} jslib.cpp)
   target_link_libraries(kakadujs PRIVATE libkdu)
   target_compile_features(kakadujs PUBLIC cxx_std_17)
-else()
-  #add_library(kakadujs ${SOURCES})
-endif()
-
-if(EMSCRIPTEN)
-
-  if (CMAKE_BUILD_TYPE STREQUAL Debug)
-    SET(linkFlags "-g4")
-  else() # Either MinSizeRel, RelWithDebInfo or Release, all which run with optimizations enabled.
-    SET(linkFlags "-O3")
-  endif()
 
   set_target_properties(
       kakadujs 
@@ -32,4 +21,9 @@ if(EMSCRIPTEN)
         -s EXPORTED_RUNTIME_METHODS=[ccall] \
     ")
 
-endif()
+  else()
+    # TODO - turn this into a C++ library so it can be used in c++ applications.
+    # Currently this is a header only lib so its not super useful but we could add
+    # some non header code (.cpp) some day where this would be helpful
+    #add_library(kakadujs ${SOURCES})
+  endif()

@@ -14,6 +14,7 @@
 #include "kdu_compressed.h"
 #include "kdu_sample_processing.h"
 #include "kdu_utils.h" // Access `kdu_memsafe_mul' etc. for safe mem calcs
+#include "jp2.h"
 
 #include "kdu_stripe_decompressor.h"
 
@@ -89,6 +90,8 @@ public:
   /// </summary>
   void readHeader()
   {
+    // kdu_supp::jp2_family_src jp2_ultimate_src;
+
     kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
     kdu_core::kdu_codestream codestream;
     codestream.create(&input);

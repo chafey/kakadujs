@@ -34,7 +34,6 @@ public: // Member functions
   {
     const size_t size = encoded_.size();
     encoded_.resize(size + num_bytes);
-
     memcpy(encoded_.data() + size, buf, num_bytes);
     return true;
   }
@@ -164,6 +163,10 @@ public:
   /// </summary>
   void encode()
   {
+    // resize the encoded buffer so we don't have to keep resizing it
+    const size_t bytesPerPixel = (frameInfo_.bitsPerSample + 8 - 1) / 8;
+    encoded_.reserve(frameInfo_.width * frameInfo_.height * frameInfo_.componentCount * bytesPerPixel);
+
     //  Construct code-stream object
     kdu_core::siz_params siz;
     siz.set(Scomponents, 0, 0, frameInfo_.componentCount);
@@ -227,7 +230,6 @@ public:
 
     sprintf(param, "Cblk={%d,%d}", blockDimensions_.width, blockDimensions_.height);
     codestream.access_siz()->parse_string(param);
-
     codestream.access_siz()->finalize_all(); // Set up coding defaults
 
     // Now compress the image in one hit, using `kdu_stripe_compressor'

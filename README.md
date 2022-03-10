@@ -22,5 +22,5 @@ To build EMSCRIPTEN verision:
 Launch docker container using Visual Studio Remote Containers and then:
 
 ```
-> ./build.sh
+> ./build-wasm.sh
 ```
