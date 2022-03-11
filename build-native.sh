@@ -1,7 +1,9 @@
-#!/bin/sh
-#rm -rf build-native
+#!/bin/bash
+rm -rf build-native
 mkdir -p build-native
-#(cd build-native && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug ..)
-(cd build-native && CC=clang CXX=clang++ cmake ..)
-(cd build-native && make VERBOSE=1 -j 8)
-(build-native/test/cpp/cpptest 20)
+#(cd build-native && cmake -DCMAKE_BUILD_TYPE=Debug ..)
+(cd build-native && cmake ..)
+NPROC=$(sysctl -n hw.ncpu)
+(cd build-native && make -j $NPROC)
+#(cd build-native && make VERBOSE=1 -j $NPROC)
+(build-native/test/cpp/cpptest 10)

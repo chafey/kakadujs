@@ -61,7 +61,7 @@ void sub_timespec(struct timespec t1, struct timespec t2, struct timespec *td)
     }
 }
 
-void decodeFile(const char *path, size_t iterations = 1)
+std::vector<uint8_t> decodeFile(const char *path, size_t iterations = 1)
 {
     HTJ2KDecoder decoder;
     std::vector<uint8_t> &encodedBytes = decoder.getEncodedBytes();
@@ -89,6 +89,7 @@ void decodeFile(const char *path, size_t iterations = 1)
     auto mps = (double)(megaPixels)*fps;
 
     printf("Native-decode %s Pixels=%d megaPixels=%f TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", path, pixels, megaPixels, totalTimeMS, timePerFrameMS, mps, fps);
+    return encodedBytes;
 }
 
 void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPath = NULL, size_t iterations = 1)
@@ -146,5 +147,11 @@ int main(int argc, char **argv)
     //   decodeFile("test/fixtures/j2c/MG1.j2c");
 
     encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/ignore.j2c", iterations);
+    printf("decoding test/fixtures/raw/CT1.RAW\n");
+    std::vector<uint8_t> decodedRawBytes = decodeFile("test/fixtures/raw/CT1.RAW");
+    std::vector<uint8_t> originalRawBytes;
+    readFile("test/fixtures/raw/CT1.RAW", originalRawBytes);
+    printf("matches = %d\n", decodedRawBytes == originalRawBytes);
+
     return 0;
 }
