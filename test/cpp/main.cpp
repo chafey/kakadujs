@@ -88,17 +88,18 @@ std::vector<uint8_t> decodeFile(const char *path, size_t iterations = 1)
     auto fps = 1000 / timePerFrameMS;
     auto mps = (double)(megaPixels)*fps;
 
-    printf("Native-decode %s Pixels=%d megaPixels=%f TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", path, pixels, megaPixels, totalTimeMS, timePerFrameMS, mps, fps);
-    return encodedBytes;
+    printf("Native-decode %s TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", path, totalTimeMS, timePerFrameMS, mps, fps);
+    return decoder.getDecodedBytes();
 }
 
 void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPath = NULL, size_t iterations = 1)
 {
+    printf("FrameInfo %dx%dx%d %d bpp\n", frameInfo.width, frameInfo.height, frameInfo.componentCount, frameInfo.bitsPerSample);
     HTJ2KEncoder encoder;
-    // encoder.setDecompositions(2);
-    // encoder.setQuality(false, 0.001f);
-    // encoder.setBlockDimensions(Size(16, 16));
-    // encoder.setProgressionOrder(0);
+    encoder.setQuality(true, 0.0f);
+    encoder.setDecompositions(5);
+    encoder.setBlockDimensions(Size(64, 64));
+    encoder.setProgressionOrder(0);
     std::vector<uint8_t> &rawBytes = encoder.getDecodedBytes(frameInfo);
 
     readFile(inPath, rawBytes);
@@ -122,29 +123,32 @@ void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPa
     auto fps = 1000 / timePerFrameMS;
     auto mps = (double)(megaPixels)*fps;
 
-    printf("Native-encode %s Pixels=%d megaPixels=%f TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", inPath, pixels, megaPixels, totalTimeMS, timePerFrameMS, mps, fps);
+    const std::vector<uint8_t> &encodedBytes = encoder.getEncodedBytes();
+
+    printf("Native-encode %s Size=%lu TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", inPath, encodedBytes.size(), totalTimeMS, timePerFrameMS, mps, fps);
 
     if (outPath)
     {
-        const std::vector<uint8_t> &encodedBytes = encoder.getEncodedBytes();
-        // printf("encodedBytes.size() = %lu\n", encodedBytes.size());
         writeFile(outPath, encodedBytes);
     }
 }
 
 int main(int argc, char **argv)
 {
-    // decodeFile("test/fixtures/CT1_J2KI");
+    const size_t iterations = (argc > 1) ? atoi(argv[1]) : 1;
+
     //  warm up the decoder and encoder
     decodeFile("test/fixtures/j2c/CT1.j2c", 1);
     encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true});
 
-    const size_t iterations = (argc > 1) ? atoi(argv[1]) : 1;
-    decodeFile("test/fixtures/j2c/CT1.j2c", 1);
-
+    // benchmark
+    decodeFile("test/fixtures/j2c/CT1.j2c", iterations);
     decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
-    //   decodeFile("test/fixtures/j2c/CT2.j2c");
-    //   decodeFile("test/fixtures/j2c/MG1.j2c");
+    encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, NULL, iterations);
+
+    encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/ignore.j2c");
+
+    // decodeFile("test/fixtures/CT1_J2KI");0
 
     encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/ignore.j2c", iterations);
     printf("decoding test/fixtures/raw/CT1.RAW\n");

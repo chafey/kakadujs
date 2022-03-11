@@ -34,7 +34,6 @@ public: // Member functions
   {
     const size_t size = encoded_.size();
     encoded_.resize(size + num_bytes);
-
     memcpy(encoded_.data() + size, buf, num_bytes);
     return true;
   }
@@ -56,7 +55,8 @@ public:
                    lossless_(true),
                    quantizationStep_(-1.0),
                    progressionOrder_(2), // RPCL
-                   blockDimensions_(64, 64)
+                   blockDimensions_(64, 64),
+                   htEnabled_(true)
   {
   }
 
@@ -157,6 +157,14 @@ public:
   }
 
   /// <summary>
+  /// Sets HT encoding
+  /// </summary>
+  void setHTEnabled(bool htEnabled)
+  {
+    htEnabled_ = htEnabled;
+  }
+
+  /// <summary>
   /// Executes an HTJ2K encode using the data in the source buffer.  The
   /// JavaScript code must copy the source image frame into the source
   /// buffer before calling this method.  See documentation on getSourceBytes()
@@ -164,6 +172,10 @@ public:
   /// </summary>
   void encode()
   {
+    // resize the encoded buffer so we don't have to keep resizing it
+    const size_t bytesPerPixel = (frameInfo_.bitsPerSample + 8 - 1) / 8;
+    encoded_.reserve(frameInfo_.width * frameInfo_.height * frameInfo_.componentCount * bytesPerPixel);
+
     //  Construct code-stream object
     kdu_core::siz_params siz;
     siz.set(Scomponents, 0, 0, frameInfo_.componentCount);
@@ -190,7 +202,10 @@ public:
     codestream.create(&siz, &output);
 
     // Set up any specific coding parameters and finalize them.
-    codestream.access_siz()->parse_string("Cmodes=HT");
+    if (htEnabled_)
+    {
+      codestream.access_siz()->parse_string("Cmodes=HT");
+    }
     char param[32];
     if (lossless_)
     {
@@ -227,7 +242,6 @@ public:
 
     sprintf(param, "Cblk={%d,%d}", blockDimensions_.width, blockDimensions_.height);
     codestream.access_siz()->parse_string(param);
-
     codestream.access_siz()->finalize_all(); // Set up coding defaults
 
     // Now compress the image in one hit, using `kdu_stripe_compressor'
@@ -270,6 +284,6 @@ private:
   bool lossless_;
   float quantizationStep_;
   size_t progressionOrder_;
-
   Size blockDimensions_;
+  bool htEnabled_;
 };
