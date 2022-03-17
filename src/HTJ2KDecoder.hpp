@@ -15,6 +15,7 @@
 #include "kdu_sample_processing.h"
 #include "kdu_utils.h" // Access `kdu_memsafe_mul' etc. for safe mem calcs
 #include "jp2.h"
+#include "jpx.h"
 
 #include "kdu_stripe_decompressor.h"
 
@@ -215,9 +216,28 @@ public:
   }
 
 private:
-  void readHeader_(kdu_core::kdu_codestream &codestream, kdu_core::kdu_compressed_source_buffered &input)
+  void readHeader_(kdu_core::kdu_codestream &codestream, kdu_core::kdu_compressed_source_buffered &source)
   {
-    codestream.create(&input);
+    kdu_supp::kdu_compressed_source *input = &source;
+    /*
+        kdu_supp::jp2_family_src jp2_ultimate_src;
+        jp2_ultimate_src.open(&source);
+        kdu_supp::jpx_source jpx_in;
+        kdu_supp::jpx_codestream_source jpx_stream;
+        if (jpx_in.open(&jp2_ultimate_src, true) < 0)
+        {
+          jp2_ultimate_src.close();
+          input = &source;
+          source.seek(-source.get_pos());
+        }
+        else
+        {
+          printf("JPX FILE!\n");
+          jpx_stream = jpx_in.access_codestream(0);
+          input = jpx_stream.open_stream();
+        }
+    */
+    codestream.create(input);
     // codestream.set_resilient();
     // codestream.set_fussy(); // Set the parsing error tolerance.
 
@@ -259,18 +279,23 @@ private:
 
     isHTEnabled_ = codestream.get_ht_usage();
     size_t bytesPerPixel = (frameInfo_.bitsPerSample + 1) / 8;
-
     // Now decompress the image in one hit, using `kdu_stripe_decompressor'
     size_t num_samples = kdu_core::kdu_memsafe_mul(frameInfo_.componentCount,
                                                    kdu_core::kdu_memsafe_mul(frameInfo_.width,
                                                                              frameInfo_.height));
     decoded_.resize(num_samples * bytesPerPixel);
-
     kdu_core::kdu_byte *buffer = decoded_.data();
     kdu_supp::kdu_stripe_decompressor decompressor;
     decompressor.start(codestream);
     int stripe_heights[3] = {frameInfo_.height, frameInfo_.height, frameInfo_.height};
-    decompressor.pull_stripe((kdu_core::kdu_int16 *)buffer, stripe_heights);
+    if (bytesPerPixel == 1)
+    {
+      decompressor.pull_stripe((kdu_core::kdu_byte *)buffer, stripe_heights);
+    }
+    else
+    {
+      decompressor.pull_stripe((kdu_core::kdu_int16 *)buffer, stripe_heights);
+    }
     decompressor.finish();
   }
 

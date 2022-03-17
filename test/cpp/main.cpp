@@ -15,6 +15,11 @@ void readFile(std::string fileName, std::vector<uint8_t> &vec)
 {
     // open the file:
     std::ifstream file(fileName, std::ios::in | std::ios::binary);
+    if (file.fail())
+    {
+        printf("File %s does not exist\n", fileName.c_str());
+        exit(1);
+    }
     // Stop eating new lines in binary mode!!!
     file.unsetf(std::ios::skipws);
 
@@ -145,9 +150,13 @@ int main(int argc, char **argv)
     decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
     encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, NULL, iterations);
 
-    encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/ignore.j2c");
+    // JPEG2000 color testing
+    decodeFile("test/fixtures/j2k/US1.j2k", 1);
+
+    // encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/ignore.j2c");
+    // decodeFile("test/fixtures/j2c/ignore.j2c", 1);
+    // decodeFile("test/fixtures/j2c/ignore.j2c", 1);
 
     // decodeFile("test/fixtures/CT1_J2KI");0
-
     return 0;
 }

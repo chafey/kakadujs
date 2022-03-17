@@ -71,6 +71,8 @@ set(APP_SUPPORT_SOURCES
     "${KAKADU_ROOT}/apps/support/kdu_stripe_compressor.cpp"
     "${KAKADU_ROOT}/apps/support/supp_local.cpp"
     "${KAKADU_ROOT}/apps/jp2/jp2.cpp"
+    "${KAKADU_ROOT}/apps/jp2/jpx.cpp"
+    "${KAKADU_ROOT}/apps/client_server/kdu_client_window.cpp"
 )
 
 if(KAKADU_INTEL_SIMD)

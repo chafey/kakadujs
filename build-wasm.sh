@@ -5,7 +5,7 @@ NC='\033[0m' # No Color
 
 #rm -rf build-wasm
 mkdir -p build-wasm
-#(cd build && emcmake cmake -DCMAKE_BUILD_TYPE=Debug ..)
+#(cd build-wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Debug ..)
 (cd build-wasm && emcmake cmake ..)
 if [ $retVal -ne 0 ]; then
     echo "${RED}CMAKE FAILED${NC}"
