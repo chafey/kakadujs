@@ -24,6 +24,11 @@ set(COMPRESSED_SOURCES
     "${KAKADU_ROOT}/coresys/compressed/codestream.cpp"
     "${KAKADU_ROOT}/coresys/compressed/compressed.cpp"
 )
+# v8_3 and later, remove for v8_2
+set(SHARED_SOURCES
+    "${KAKADU_ROOT}/coresys/shared/core_local.cpp"
+)
+
 
 set(KERNEL_SOURCES
     "${KAKADU_ROOT}/coresys/kernels/kernels.cpp"
@@ -109,7 +114,7 @@ if(KAKADU_SIMD_ACCELERATION)
             "${KAKADU_ROOT}/apps/support/ssse3_stripe_transfer.cpp"
         )
 
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DKDU_NO_THREADS")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2 -DKDU_X86_INTRINSIC -m64")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
@@ -117,7 +122,7 @@ if(KAKADU_SIMD_ACCELERATION)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2 -mfma -mbmi -mbmi2 -mlzcnt")
     elseif(ARCHITECTURE STREQUAL "arm64")
 
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -DKDU_NEON_INTRINSICS -DKDU_NO_THREADS")
 
         set(NEON_SOURCES
             "${KAKADU_ROOT}/apps/support/neon_stripe_transfer.cpp"
@@ -135,6 +140,7 @@ if(KAKADU_SIMD_ACCELERATION)
  endif()
 
 add_library (libkdu 
+    ${SHARED_SOURCES}
     ${CODING_SOURCES} 
     ${COMPRESSED_SOURCES} 
     ${KERNEL_SOURCES} 

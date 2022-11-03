@@ -24,4 +24,4 @@ if [ $retVal -ne 0 ]; then
     echo "${RED}MAKE FAILED${NC}"
     exit 1
 fi
-(build-native/test/cpp/cpptest 20)  
+(build-native/test/cpp/cpptest 30)  

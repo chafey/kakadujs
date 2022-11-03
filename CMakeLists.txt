@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project (kakadujs LANGUAGES CXX)
 
 # TODO: Update to the location of your Kakadu source code
-set(KAKADU_ROOT "${CMAKE_SOURCE_DIR}/extern/v8_2_1-02044N")
+set(KAKADU_ROOT "${CMAKE_SOURCE_DIR}/extern/v8_3-02120E")
 
 # set the build type if not specified
 set(default_build_type "Release")
