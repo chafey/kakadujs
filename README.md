@@ -1,5 +1,7 @@
 # kakadujs
-WASM Build of Kakadu
+Kakadu wrapper for medical imaging use
+
+Includes builds for WASM and native C/C++ on Mac/Linux x86/ARM64
 
 ## Status
 
@@ -8,7 +10,7 @@ WIP - don't use yet
 ## Building
 
 This code has been developed/tested against v8_3 of Kakadu for Mac and Linux (x86 and arm).  Windows/visual studio
-is possible but will require updates to the CMakeLists.txt file.  You must place a licensed version of the Kakadu source in the extern folder (e.g. extern/v_8_3-02044N) and update the variabel KAKADU_ROOT in CMakeLists.txt accordingly.  To maximize performance, make sure you replace srclib_ht with altlib_ht_opt in the Kakadu directory (see
+is possible but will require updates to the CMakeLists.txt file.  You must place a licensed version of the Kakadu source in the extern folder (e.g. extern/v_8_3-02044N) and update the variable KAKADU_ROOT in CMakeLists.txt accordingly.  To maximize performance, make sure you replace srclib_ht with altlib_ht_opt in the Kakadu directory (see
 Enabling_HT.txt in the Kakadu library for more information)
 
 ### Prerequisites
