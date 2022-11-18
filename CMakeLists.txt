@@ -12,10 +12,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "${default_build_type}")
 endif()
 
-# warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function -Wno-overloaded-virtual")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type")
-
 option(KAKADU_SIMD_ACCELERATION "" ON)
 
 # do platform specific stuff
@@ -23,9 +19,14 @@ if(EMSCRIPTEN)
   SET(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128")
 else()
-  # Use -Ofast to maximize speed
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Ofast -DNDEBUG")
   if(UNIX)
+    # warnings
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function -Wno-overloaded-virtual")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type")
+
+    # Use -Ofast to maximize speed
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Ofast -DNDEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
     EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
     message(STATUS "ARCHITECURE=${ARCHITECTURE}")
     if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
@@ -44,10 +45,13 @@ else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DKDU_X86_INTRINSICS")
       endif()
     endif()
+  elseif(WIN32)
+    set(ARCHITECTURE "x86_64")
+    add_compile_definitions(KDU_X86_INTRINSICS)
+    set(KAKADU_PLATFORM "Win-x86-64")
   else()
-    message(FATAL_ERROR "Non Unix systems not supported yet" )
+    message(FATAL_ERROR "Platform not supported yet" )
   endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 endif()
 
 # use kakadu fast block coder

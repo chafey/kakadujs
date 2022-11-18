@@ -11,6 +11,19 @@
 #include "../../src/HTJ2KDecoder.hpp"
 #include "../../src/HTJ2KEncoder.hpp"
 
+#ifndef clock_gettime
+#define CLOCK_PROCESS_CPUTIME_ID 0
+//struct timespec { long tv_sec; long tv_nsec; };    //header part
+int clock_gettime(int, struct timespec* spec)      //C-file part
+{
+    __int64 wintime; GetSystemTimeAsFileTime((FILETIME*)&wintime);
+    wintime -= 116444736000000000i64;  //1jan1601 to 1jan1970
+    spec->tv_sec = wintime / 10000000i64;           //seconds
+    spec->tv_nsec = wintime % 10000000i64 * 100;      //nano-seconds
+    return 0;
+}
+#endif
+
 void readFile(std::string fileName, std::vector<uint8_t> &vec)
 {
     // open the file:

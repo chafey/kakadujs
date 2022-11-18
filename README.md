@@ -1,24 +1,31 @@
 # kakadujs
 Kakadu wrapper for medical imaging use
 
-Includes builds for WASM and native C/C++ on Mac/Linux x86/ARM64
+Includes builds for WASM and native C/C++ on Mac/Linux/Windows
 
 ## Status
 
-WIP - don't use yet
+Experimental - use at your own risk
 
 ## Building
 
-This code has been developed/tested against v8_3 of Kakadu for Mac and Linux (x86 and arm).  Windows/visual studio
-is possible but will require updates to the CMakeLists.txt file.  You must place a licensed version of the Kakadu source in the extern folder (e.g. extern/v_8_3-02044N) and update the variable KAKADU_ROOT in CMakeLists.txt accordingly.  To maximize performance, make sure you replace srclib_ht with altlib_ht_opt in the Kakadu directory (see
-Enabling_HT.txt in the Kakadu library for more information)
+This code has been developed/tested against v8_3 of Kakadu for Mac (x64/ARM), Linux (x64/ARM) and Windows (x64).  
+You must place a licensed version of the Kakadu source in the extern folder (e.g. extern/v_8_3-02044N) and update the
+variable KAKADU_ROOT in CMakeLists.txt accordingly.  To maximize performance, make sure you replace srclib_ht with 
+altlib_ht_opt in the Kakadu directory (see Enabling_HT.txt in the Kakadu library for more information)
 
 ### Prerequisites
+
+### Linux/Mac OS X
 
 * CMake
 * C++ Compiler Toolchain (e.g. Ubuntu build-essentials, XCode command line tools)
 
-### Building the native C++ version
+### Windows
+
+* Visual Studio 2022
+
+### Building the native C++ version with Linux/Mac OS X
 
 The test app in test/cpp/main.cpp will generate benchmarks for decoding and encoding.  TPF = Time Per Frame/Image.
 Ignore the first two lines as they are just warming up the decoder/encoder for more accurate numbers below.
@@ -36,6 +43,25 @@ Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 55.38 ms TPF=1.85
 Native-decode test/fixtures/j2k/US1.j2k TotalTime= 21.70 ms TPF=21.70 ms (13.50 MP/s, 46.08 FPS)
 FrameInfo 512x512x1 16 bpp
 Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 54.42 ms TPF=1.81 ms (137.81 MP/s, 551.23 FPS)
+decoding test/fixtures/raw/CT1.RAW
+```
+
+### Building the native C++ version with Windows/Visual Studio 2022
+
+Build the x64-release version.  Run cpp test from the project root directory
+
+```
+C:\Users\chafe\source\repos\kakadujs>out\build\x64-Release\test\cpp\cpptest
+Native-decode test/fixtures/j2c/CT1.j2c TotalTime= 3.00 ms TPF=3.00 ms (83.32 MP/s, 333.27 FPS)
+FrameInfo 512x512x1 16 bpp
+Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 2.00 ms TPF=2.00 ms (125.01 MP/s, 500.03 FPS)
+Native-decode test/fixtures/j2c/CT1.j2c TotalTime= 2.00 ms TPF=2.00 ms (124.95 MP/s, 499.80 FPS)
+Native-decode test/fixtures/j2c/MG1.j2c TotalTime= 78.02 ms TPF=78.02 ms (178.81 MP/s, 12.82 FPS)
+FrameInfo 512x512x1 16 bpp
+Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 2.00 ms TPF=2.00 ms (124.98 MP/s, 499.93 FPS)
+Native-decode test/fixtures/j2k/US1.j2k TotalTime= 33.01 ms TPF=33.01 ms (8.88 MP/s, 30.30 FPS)
+FrameInfo 512x512x1 16 bpp
+Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 2.00 ms TPF=2.00 ms (124.97 MP/s, 499.88 FPS)
 decoding test/fixtures/raw/CT1.RAW
 ```
 
