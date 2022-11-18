@@ -4,10 +4,8 @@ add_executable(cpptest main.cpp)
 if(UNIX)
     target_link_libraries(cpptest PRIVATE 
         libkdu 
-        ${KAKADU_ROOT}/srclib_ht/${KAKADU_PLATFORM}/libkdu_ht.a
+        ${KAKADU_ROOT}/srclib_ht/${KAKADU_PLATFORM}/libkdu_ht.a m
     )
-    target_link_libraries(cpptest m) # math library for gcc
-    #target_link_options(cpptest PUBLIC "-lm")
 elseif(WIN32) 
     target_link_libraries(cpptest PRIVATE 
         libkdu 

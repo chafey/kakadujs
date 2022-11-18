@@ -11,7 +11,7 @@
 #include "../../src/HTJ2KDecoder.hpp"
 #include "../../src/HTJ2KEncoder.hpp"
 
-#ifndef clock_gettime
+#ifdef _WIN32
 #define CLOCK_PROCESS_CPUTIME_ID 0
 //struct timespec { long tv_sec; long tv_nsec; };    //header part
 int clock_gettime(int, struct timespec* spec)      //C-file part
