@@ -79,7 +79,7 @@ void sub_timespec(struct timespec t1, struct timespec t2, struct timespec *td)
     }
 }
 
-std::vector<uint8_t> decodeFile(const char *path, size_t iterations = 1)
+std::vector<uint8_t> decodeFile(const char *path, size_t iterations = 1, bool silent=false)
 {
     HTJ2KDecoder decoder;
     std::vector<uint8_t> &encodedBytes = decoder.getEncodedBytes();
@@ -106,13 +106,17 @@ std::vector<uint8_t> decodeFile(const char *path, size_t iterations = 1)
     auto fps = 1000 / timePerFrameMS;
     auto mps = (double)(megaPixels)*fps;
 
-    printf("Native-decode %s TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", path, totalTimeMS, timePerFrameMS, mps, fps);
+    if(!silent) {
+        printf("NATIVE decode %s TotalTime: %.3f s for %zu iterations; TPF=%.3f ms (%.2f MP/s, %.2f FPS)\n", path, totalTimeMS / 1000, iterations, timePerFrameMS, mps, fps);
+    }
+
+    //printf("Native-decode %s TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", path, totalTimeMS, timePerFrameMS, mps, fps);
     return decoder.getDecodedBytes();
 }
 
-void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPath = NULL, size_t iterations = 1)
+void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPath = NULL, size_t iterations = 1, bool silent=false)
 {
-    printf("FrameInfo %dx%dx%d %d bpp\n", frameInfo.width, frameInfo.height, frameInfo.componentCount, frameInfo.bitsPerSample);
+    //printf("FrameInfo %dx%dx%d %d bpp\n", frameInfo.width, frameInfo.height, frameInfo.componentCount, frameInfo.bitsPerSample);
     HTJ2KEncoder encoder;
     encoder.setQuality(true, 0.0f);
     encoder.setDecompositions(5);
@@ -142,8 +146,9 @@ void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPa
     auto mps = (double)(megaPixels)*fps;
 
     const std::vector<uint8_t> &encodedBytes = encoder.getEncodedBytes();
-
-    printf("Native-encode %s Size=%lu TotalTime= %.2f ms TPF=%.2f ms (%.2f MP/s, %.2f FPS)\n", inPath, encodedBytes.size(), totalTimeMS, timePerFrameMS, mps, fps);
+    if(!silent) {
+        printf("NATIVE encode %s TotalTime: %.3f s for %zu iterations; TPF=%.3f ms (%.2f MP/s, %.2f FPS)\n", inPath, totalTimeMS / 1000, iterations, timePerFrameMS, mps, fps);
+    } 
 
     if (outPath)
     {
@@ -153,11 +158,11 @@ void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPa
 
 int main(int argc, char **argv)
 {
-    const size_t iterations = (argc > 1) ? atoi(argv[1]) : 1;
+    const size_t iterations = (argc > 1) ? atoi(argv[1]) : 20;
 
     //  warm up the decoder and encoder
-    decodeFile("test/fixtures/j2c/CT1.j2c", 1);
-    encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true});
+    decodeFile("test/fixtures/j2c/CT1.j2c", 1, true);
+    encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, NULL, 1, true);
 
     // benchmark
     decodeFile("test/fixtures/j2c/CT1.j2c", iterations);
@@ -165,18 +170,20 @@ int main(int argc, char **argv)
     encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, NULL, iterations);
 
     // JPEG2000 color testing
-    decodeFile("test/fixtures/j2k/US1.j2k", 1);
+    //deFile("test/fixtures/j2k/US1.j2k", 1);
 
     // encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/ignore.j2c");
     // decodeFile("test/fixtures/j2c/ignore.j2c", 1);
     // decodeFile("test/fixtures/j2c/ignore.j2c", 1);
 
+/*
     encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, "test/fixtures/j2c/ignore.j2c", iterations);
     printf("decoding test/fixtures/raw/CT1.RAW\n");
     std::vector<uint8_t> decodedRawBytes = decodeFile("test/fixtures/raw/CT1.RAW");
     std::vector<uint8_t> originalRawBytes;
     readFile("test/fixtures/raw/CT1.RAW", originalRawBytes);
     printf("matches = %d\n", decodedRawBytes == originalRawBytes);
+*/
 
     return 0;
 }

@@ -1,66 +1,92 @@
 // Copyright (c) Chris Hafey.
 // SPDX-License-Identifier: MIT
 
-let openjphjs = require('../../dist/openjphjs.js');
+const openjphjs = require('../../dist/kakadujs.js');
 const fs = require('fs')
 
-function decode(encodedImagePath, iterations = 1) {
-  const encodedBitStream = fs.readFileSync(encodedImagePath);
+openjphjs.onRuntimeInitialized = async _ => {
+
+  // create an instance of the encoder and decoder
   const decoder = new openjphjs.HTJ2KDecoder();
-  const encodedBuffer = decoder.getEncodedBuffer(encodedBitStream.length);
-  encodedBuffer.set(encodedBitStream);
-
-  // do the actual benchmark
-  const beginDecode = process.hrtime();
-  for(var i=0; i < iterations; i++) {
-    decoder.decode();
-  }
-  const decodeDuration = process.hrtime(beginDecode); // hrtime returns seconds/nanoseconds tuple
-  const decodeDurationInSeconds = (decodeDuration[0] + (decodeDuration[1] / 1000000000));
+  const encoder = new openjphjs.HTJ2KEncoder();
   
-  // Print out information about the decode
-  console.log("Decode of " + encodedImagePath + " took " + ((decodeDurationInSeconds / iterations * 1000)) + " ms");
-  const frameInfo = decoder.getFrameInfo();
-  console.log('  frameInfo = ', frameInfo);
-  console.log(' imageOffset = ', decoder.getImageOffset());
-  var decoded = decoder.getDecodedBuffer();
-  console.log('  decoded length = ', decoded.length);
+  function decode(encodedImagePath, iterations = 1, silent = false) {
 
-  decoder.delete();
-}
+    // read encoded bits and copy it into WASM memory
+    const encodedBitStream = fs.readFileSync(encodedImagePath);
+    const encodedBuffer = decoder.getEncodedBuffer(encodedBitStream.length);
+    encodedBuffer.set(encodedBitStream);
+  
+    // do the actual benchmark
+    const beginDecode = process.hrtime();
+    for(var i=0; i < iterations; i++) {
+      decoder.decode();
+    }
 
-function encode(pathToUncompressedImageFrame, imageFrame, pathToJ2CFile, iterations = 1) {
+    // Get the results
+    const frameInfo = decoder.getFrameInfo()
+    const decodeDuration = process.hrtime(beginDecode); // hrtime returns seconds/nanoseconds tuple
+    const decodeDurationInSeconds = (decodeDuration[0] + (decodeDuration[1] / 1000000000));
+    const timePerFrameMS = ((decodeDurationInSeconds / iterations * 1000)) 
+    const pixels = (frameInfo.width * frameInfo.height);
+    const megaPixels = pixels / (1024.0 * 1024.0);
+    const fps = 1000 / timePerFrameMS;
+    const mps = (megaPixels)*fps;
+  
+    // Print out information about the decode
+    if(!silent) {
+      console.log(`WASM decode ${encodedImagePath} TotalTime: ${decodeDurationInSeconds.toFixed(3)} s for ${iterations} iterations; TPF=${timePerFrameMS.toFixed(3)} ms (${mps.toFixed(2)} MP/s, ${fps.toFixed(2)} FPS)`)
+    }
+  }
+  
+  function encode(pathToUncompressedImageFrame, frameInfo, pathToJ2CFile, iterations = 1, silent=false) {
+    // Read file and store into WASM Memory
     const uncompressedImageFrame = fs.readFileSync(pathToUncompressedImageFrame);
-    console.log('uncompressedImageFrame.length:', uncompressedImageFrame.length)
-    const encoder = new openjphjs.HTJ2KEncoder();
-    const decodedBytes = encoder.getDecodedBuffer(imageFrame);
+    const decodedBytes = encoder.getDecodedBuffer(frameInfo);
     decodedBytes.set(uncompressedImageFrame);
     //encoder.setQuality(false, 0.001);
-  
+    
+    // do the actual benchmark
     const encodeBegin = process.hrtime();
     for(var i=0; i < iterations;i++) {
       encoder.encode();
     }
+
+    // get the results
     const encodeDuration = process.hrtime(encodeBegin);
     const encodeDurationInSeconds = (encodeDuration[0] + (encodeDuration[1] / 1000000000));
-    
+    const timePerFrameMS = ((encodeDurationInSeconds / iterations * 1000)) 
+    const pixels = (frameInfo.width * frameInfo.height);
+    const megaPixels = pixels / (1024.0 * 1024.0);
+    const fps = 1000 / timePerFrameMS;
+    const mps = (megaPixels)*fps;
+  
     // print out information about the encode
-    console.log("Encode of " + pathToUncompressedImageFrame + " took " + ((encodeDurationInSeconds / iterations * 1000)) + " ms");
-    const encodedBytes = encoder.getEncodedBuffer();
-    console.log('  encoded length=', encodedBytes.length)
+    if(!silent) {
+      console.log(`WASM encode ${pathToUncompressedImageFrame} TotalTime: ${encodeDurationInSeconds.toFixed(3)} s for ${iterations} iterations; TPF=${timePerFrameMS.toFixed(3)} ms (${mps.toFixed(2)} MP/s, ${fps.toFixed(2)} FPS)`)
+    }
   
     if(pathToJ2CFile) {
         //fs.writeFileSync(pathToJ2CFile, encodedBytes);
     }
-    // cleanup allocated memory
-    encoder.delete();
   }
 
-openjphjs.onRuntimeInitialized = async _ => {
-  decode('../fixtures/j2c/CT2.j2c');
-  decode('../../extern/OpenJPH/subprojects/js/html/test.j2c');
+  // warm up decoder and encoder
+  decode('../fixtures/j2c/CT2.j2c', 1, true);
+  encode('../fixtures/raw/CT1.RAW', {width: 512, height: 512, bitsPerSample: 16, componentCount: 1, isSigned: true}, '../fixtures/j2c/CT1.j2c', 1, true);
 
-  encode('../fixtures/raw/CT1.RAW', {width: 512, height: 512, bitsPerSample: 16, componentCount: 1, isSigned: true}, '../fixtures/j2c/CT1.j2c');
+  // benchmark
+  const iterations = 20
+  decode('../fixtures/j2c/CT1.j2c', iterations);
+  decode('../fixtures/j2c/MG1.j2c', iterations);
+  encode('../fixtures/raw/CT1.RAW', {width: 512, height: 512, bitsPerSample: 16, componentCount: 1, isSigned: true}, '../fixtures/j2c/CT1.j2c', iterations);
+
+  // J2K Color testing
+  //decodeFile("test/fixtures/j2k/US1.j2k", 1);
+
+
+  // benchark encoding
+
   //encode('../fixtures/raw/CT2.RAW', {width: 512, height: 512, bitsPerSample: 16, componentCount: 1, isSigned: true}, '../fixtures/j2c/CT2.j2c');
   //encode('../fixtures/raw/MG1.RAW', {width: 3064, height: 4774, bitsPerSample: 16, componentCount: 1, isSigned: false}, '../fixtures/j2c/MG1.j2c');
   //encode('../fixtures/raw/MR1.RAW', {width: 512, height: 512, bitsPerSample: 16, componentCount: 1, isSigned: true}, '../fixtures/j2c/MR1.j2c');
@@ -75,4 +101,4 @@ openjphjs.onRuntimeInitialized = async _ => {
   //encode('../fixtures/raw/SC1.RAW', {width: 2048, height: 2487, bitsPerSample: 16, componentCount: 1, isSigned: false}, '../fixtures/j2c/SC1.j2c');
   //encode('../fixtures/raw/XA1.RAW', {width: 1024, height: 1024, bitsPerSample: 16, componentCount: 1, isSigned: false}, '../fixtures/j2c/XA1.j2c');
 
-}
+  }

@@ -33,17 +33,9 @@ Ignore the first two lines as they are just warming up the decoder/encoder for m
 ```
 > ./build-native.sh
 
-Native-decode test/fixtures/j2c/CT1.j2c TotalTime= 1.58 ms TPF=1.58 ms (158.43 MP/s, 633.71 FPS)
-FrameInfo 512x512x1 16 bpp
-Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 2.83 ms TPF=2.83 ms (88.21 MP/s, 352.86 FPS)
-Native-decode test/fixtures/j2c/CT1.j2c TotalTime= 25.68 ms TPF=0.86 ms (292.09 MP/s, 1168.36 FPS)
-Native-decode test/fixtures/j2c/MG1.j2c TotalTime= 1094.22 ms TPF=36.47 ms (382.46 MP/s, 27.42 FPS)
-FrameInfo 512x512x1 16 bpp
-Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 55.38 ms TPF=1.85 ms (135.42 MP/s, 541.68 FPS)
-Native-decode test/fixtures/j2k/US1.j2k TotalTime= 21.70 ms TPF=21.70 ms (13.50 MP/s, 46.08 FPS)
-FrameInfo 512x512x1 16 bpp
-Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 54.42 ms TPF=1.81 ms (137.81 MP/s, 551.23 FPS)
-decoding test/fixtures/raw/CT1.RAW
+NATIVE decode test/fixtures/j2c/CT1.j2c TotalTime: 0.014 s for 20 iterations; TPF=0.692 ms (361.12 MP/s, 1444.46 FPS)
+NATIVE decode test/fixtures/j2c/MG1.j2c TotalTime: 0.744 s for 20 iterations; TPF=37.206 ms (374.94 MP/s, 26.88 FPS)
+NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.037 s for 20 iterations; TPF=1.846 ms (135.44 MP/s, 541.74 FPS)
 ```
 
 ### Building the native C++ version with Windows/Visual Studio 2022
@@ -52,17 +44,9 @@ Build the x64-release version.  Run cpp test from the project root directory
 
 ```
 C:\Users\chafe\source\repos\kakadujs>out\build\x64-Release\test\cpp\cpptest
-Native-decode test/fixtures/j2c/CT1.j2c TotalTime= 3.00 ms TPF=3.00 ms (83.32 MP/s, 333.27 FPS)
-FrameInfo 512x512x1 16 bpp
-Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 2.00 ms TPF=2.00 ms (125.01 MP/s, 500.03 FPS)
-Native-decode test/fixtures/j2c/CT1.j2c TotalTime= 2.00 ms TPF=2.00 ms (124.95 MP/s, 499.80 FPS)
-Native-decode test/fixtures/j2c/MG1.j2c TotalTime= 78.02 ms TPF=78.02 ms (178.81 MP/s, 12.82 FPS)
-FrameInfo 512x512x1 16 bpp
-Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 2.00 ms TPF=2.00 ms (124.98 MP/s, 499.93 FPS)
-Native-decode test/fixtures/j2k/US1.j2k TotalTime= 33.01 ms TPF=33.01 ms (8.88 MP/s, 30.30 FPS)
-FrameInfo 512x512x1 16 bpp
-Native-encode test/fixtures/raw/CT1.RAW Size=185400 TotalTime= 2.00 ms TPF=2.00 ms (124.97 MP/s, 499.88 FPS)
-decoding test/fixtures/raw/CT1.RAW
+NATIVE decode test/fixtures/j2c/CT1.j2c TotalTime: 0.014 s for 20 iterations; TPF=0.692 ms (361.12 MP/s, 1444.46 FPS)
+NATIVE decode test/fixtures/j2c/MG1.j2c TotalTime: 0.744 s for 20 iterations; TPF=37.206 ms (374.94 MP/s, 26.88 FPS)
+NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.037 s for 20 iterations; TPF=1.846 ms (135.44 MP/s, 541.74 FPS)
 ```
 
 ## Building WASM version
@@ -71,4 +55,7 @@ Launch docker container using Visual Studio Remote Containers and then:
 
 ```
 > ./build-wasm.sh
+WASM decode ../fixtures/j2c/CT1.j2c TotalTime: 0.100 s for 20 iterations; TPF=5.001 ms (49.99 MP/s, 199.95 FPS)
+WASM decode ../fixtures/j2c/MG1.j2c TotalTime: 4.090 s for 20 iterations; TPF=204.477 ms (68.22 MP/s, 4.89 FPS)
+WASM encode ../fixtures/raw/CT1.RAW TotalTime: 0.074 s for 20 iterations; TPF=3.710 ms (67.38 MP/s, 269.52 FPS)
 ```
