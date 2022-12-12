@@ -15,7 +15,7 @@ variable KAKADU_ROOT in CMakeLists.txt accordingly.
 
 NOTE - The CMake files are setup to automatically build with the processor SIMD optimizations without making any changes
 to the default Kakadu source distribution.  You do not need to replace srclib_ht with altlib_ht_opt or set 
-FC_BLOCK_ENABLED as described in the Kakadu/Enabling_HT.txt file - this is done automatically for you.  
+FC_BLOCK_ENABLED as described in the Kakadu/Enabling_HT.txt file.  
 
 ### Prerequisites
 
@@ -26,13 +26,17 @@ FC_BLOCK_ENABLED as described in the Kakadu/Enabling_HT.txt file - this is done 
 
 #### Windows
 
-* Visual Studio 2022
+* Visual Studio 2022 (Community Edition with Desktop development with C++)
 
 ### Building the native C++ version with Linux/Mac OS X
 
-The test app in test/cpp/main.cpp will generate benchmarks for decoding and encoding.  TPF = Time Per Frame/Image.
-Numbers from an Apple M1 MacBook Pro
+The test app in test/cpp/main.cpp will generate benchmarks for decoding and encoding.  
 
+* TPF = Time Per Frame/Image.
+* MP/s = Mega pixels / second
+* FPS = Frames per second decoding
+
+Numbers from an Apple M1 MacBook Pro running macOS Monterey 12.6.1
 
 ```
 > ./build-native.sh
@@ -42,9 +46,17 @@ NATIVE decode test/fixtures/j2c/MG1.j2c TotalTime: 0.744 s for 20 iterations; TP
 NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.037 s for 20 iterations; TPF=1.846 ms (135.44 MP/s, 541.74 FPS)
 ```
 
+NOTE - lower numbers can be achieved with higher iteration counts
+
 ### Building the native C++ version with Windows/Visual Studio 2022
 
-Build the x64-release version.  Run cpp test from the project root directory.  Numbers from an Intel 13900K CPU
+Build the x64-release version.  Run cpp test from the project root directory.  
+
+* TPF = Time Per Frame/Image.
+* MP/s = Mega pixels / second
+* FPS = Frames per second decoding
+
+Numbers from an Intel 13900K running Windows 11 Pro
 
 ```
 C:\Users\chafe\source\repos\kakadujs>out\build\x64-Release\test\cpp\cpptest.exe
@@ -52,6 +64,8 @@ NATIVE decode test/fixtures/j2c/CT1.j2c TotalTime: 0.017 s for 20 iterations; TP
 NATIVE decode test/fixtures/j2c/MG1.j2c TotalTime: 0.568 s for 20 iterations; TPF=28.400 ms (491.19 MP/s, 35.21 FPS)
 NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.014 s for 20 iterations; TPF=0.700 ms (357.15 MP/s, 1428.61 FPS)
 ```
+
+NOTE - lower numbers can be achieved with higher iteration counts
 
 ## Building WASM version
 
