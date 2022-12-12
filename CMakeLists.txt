@@ -12,7 +12,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "${default_build_type}")
 endif()
 
-option(KAKADU_SIMD_ACCELERATION "" ON)
+
+# use kakadu fast block coder (HTJ2K)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFBC_ENABLED")
+set(KAKDU_HT_LIB "altlib_ht_opt")
+set(KAKADU_SIMD_ACCELERATION ON)
 
 # do platform specific stuff
 if(EMSCRIPTEN)
@@ -54,8 +58,6 @@ else()
   endif()
 endif()
 
-# use kakadu fast block coder
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFBC_ENABLED")
 
 # turn off threading
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DKDU_NO_THREADS")
