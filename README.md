@@ -14,7 +14,7 @@ You must place a licensed version of the Kakadu source in the extern folder (e.g
 variable KAKADU_ROOT in CMakeLists.txt accordingly.  
 
 NOTE - The CMake files are setup to automatically build with the processor SIMD optimizations without making any changes
-to the default Kakadu source distribution.  You do not need to replace srclib_ht with altlib_ht_opt or set 
+to the default Kakadu source distribution.  You do should NOT replace srclib_ht with altlib_ht_opt or set 
 FC_BLOCK_ENABLED as described in the Kakadu/Enabling_HT.txt file.  
 
 ### Prerequisites
@@ -44,6 +44,15 @@ Numbers from an Apple M1 MacBook Pro running macOS Monterey 12.6.1
 NATIVE decode test/fixtures/j2c/CT1.j2c TotalTime: 0.014 s for 20 iterations; TPF=0.692 ms (361.12 MP/s, 1444.46 FPS)
 NATIVE decode test/fixtures/j2c/MG1.j2c TotalTime: 0.744 s for 20 iterations; TPF=37.206 ms (374.94 MP/s, 26.88 FPS)
 NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.037 s for 20 iterations; TPF=1.846 ms (135.44 MP/s, 541.74 FPS)
+```
+NOTE - lower numbers can be achieved with higher iteration counts
+
+Numbers from Intel 13900k on Linux
+```
+> ./buildp-native.sh
+NATIVE decode test/fixtures/j2c/CT1.j2c TotalTime: 0.009 s for 20 iterations; TPF=0.448 ms (558.05 MP/s, 2232.20 FPS)
+NATIVE decode test/fixtures/j2c/MG1.j2c TotalTime: 0.564 s for 20 iterations; TPF=28.177 ms (495.09 MP/s, 35.49 FPS)
+NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.009 s for 20 iterations; TPF=0.438 ms (570.52 MP/s, 2282.07 FPS)
 ```
 
 NOTE - lower numbers can be achieved with higher iteration counts
