@@ -25,7 +25,6 @@ endif()
 
 message(STATUS "CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}.")
 
-
 # do platform specific stuff
 if(EMSCRIPTEN)
   SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Shared libraries forced off for EMSCRIPTEN" FORCE)  # EMSCRIPTEN does not support shared libraries
@@ -50,7 +49,8 @@ else()
       if(ARCHITECTURE STREQUAL "arm64")
         set(KAKADU_PLATFORM "Mac-arm-64-gcc")
       else()
-        set(KAKADU_PLATFORM "Mac-x86-64-gcc")
+      add_compile_definitions(KDU_X86_INTRINSICS)
+      set(KAKADU_PLATFORM "Mac-x86-64-gcc")
       endif()
     else() # Non mac unix (linux)
       if(ARCHITECTURE STREQUAL "aarch64")
