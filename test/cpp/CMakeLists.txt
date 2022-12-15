@@ -1,6 +1,6 @@
 # supresss warnings generated from including Kakadu headers
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wno-deprecated - volatile)
+  add_compile_options(-Wno-deprecated-volatile)
   add_compile_options(-Wno-return-type)
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
