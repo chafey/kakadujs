@@ -23,6 +23,9 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "${default_build_type}")
 endif()
 
+message(STATUS "CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}.")
+
+
 # do platform specific stuff
 if(EMSCRIPTEN)
   SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Shared libraries forced off for EMSCRIPTEN" FORCE)  # EMSCRIPTEN does not support shared libraries
