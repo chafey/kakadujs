@@ -1,6 +1,8 @@
 # supresss warnings generated from including Kakadu headers
-add_compile_options(-Wno-deprecated-volatile)
-add_compile_options(-Wno-return-type)
+add_compile_options(-Wno-volatile) # GCC
+add_compile_options(-Wno-deprecated-declarations) # KAKADU_THREADING=ON
+add_compile_options(-Wno-deprecated-volatile) #CLANG
+add_compile_options(-Wno-return-type) #CLANG
 
 add_executable(cpptest main.cpp)
 

@@ -11,6 +11,9 @@ OPTION(KAKADU_SIMD_ACCELERATION "Enable Kakadu's heavily optimized implementatio
 # Disable threading by default
 OPTION(KAKADU_THREADING "Enable Kakadu multi-threaded decoding" OFF)
 
+# Shared libraries are off by default
+option(BUILD_SHARED_LIBS "Build shared libraries (.dll/.so) instead of static ones (.lib/.a)" OFF)
+
 ###########################
 
 # set the build type if not specified
@@ -30,7 +33,7 @@ if(EMSCRIPTEN)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128") # enabled LLVM autovectoring for WASM SIMD
 else()
   if(UNIX)
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto") # add link time optimizations to release build
+    #SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto") # add link time optimizations to release build
 
     # Note - shared libraries seems to slow down kakadu on Mac OS X at least...
     if(BUILD_SHARED_LIBS)
@@ -53,7 +56,6 @@ else()
         set(KAKADU_PLATFORM "Linux-arm-64-gcc")
       else()
         set(KAKADU_PLATFORM "Linux-x86-64-gcc")
-        add_compile_definitions(KDU_X86_INTRINSICS)  # enables x86 specific optimizations
       endif()
     endif()
   elseif(WIN32)
@@ -69,6 +71,7 @@ endif()
 if(KAKADU_SIMD_ACCELERATION) 
 
   set(KAKDU_HT_LIB "altlib_ht_opt") # this has the CPU optimized libraryes (see Enabling_HT.txt)
+  #set(KAKDU_HT_LIB "srclib_ht")  # this has the CPU optimized libraryes (see Enabling_HT.txt)
 
 else()
   add_compile_definitions(FBC_NO_ACCELERATION)# disable kakadu HT acceleration (see Enabling_HT.txt)
