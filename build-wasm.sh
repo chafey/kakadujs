@@ -3,7 +3,7 @@
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-#rm -rf build-wasm
+rm -rf build-wasm
 mkdir -p build-wasm
 #(cd build-wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Debug ..)
 (cd build-wasm && emcmake cmake ..)
@@ -12,7 +12,7 @@ if [ $retVal -ne 0 ]; then
     exit 1
 fi
 
-(cd build-wasm && emmake make VERBOSE=1 -j ${nprocs})
+(cd build-wasm && emmake make VERBOSE=1 -j)
 retVal=$?
 if [ $retVal -ne 0 ]; then
     echo "${RED}MAKE FAILED${NC}"

@@ -1,9 +1,17 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 
 project (kakadujs LANGUAGES CXX)
 
 # TODO: Update to the location of your Kakadu source code
 set(KAKADU_ROOT "${CMAKE_SOURCE_DIR}/extern/v8_3-02120E")
+
+# Enable SIMD by default
+OPTION(KAKADU_SIMD_ACCELERATION "Enable Kakadu's heavily optimized implementation of HTJ2K" ON)
+
+# Disable threading by default
+OPTION(KAKADU_THREADING "Enable Kakadu multi-threaded decoding" OFF)
+
+###########################
 
 # set the build type if not specified
 set(default_build_type "Release")
@@ -12,41 +20,40 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "${default_build_type}")
 endif()
 
-
-# use kakadu fast block coder (HTJ2K)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DFBC_ENABLED")
-set(KAKDU_HT_LIB "altlib_ht_opt")
-set(KAKADU_SIMD_ACCELERATION ON)
-
 # do platform specific stuff
 if(EMSCRIPTEN)
-  SET(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128")
+  SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Shared libraries forced off for EMSCRIPTEN" FORCE)  # EMSCRIPTEN does not support shared libraries
+  SET(KAKADU_THREADING OFF CACHE BOOL "Kakadu threading forced off for EMSCRIPTEN" FORCE)  # EMSCRIPTEN threading has not been tested with kakadu yet
+  SET(KAKADU_SIMD_ACCELERATION OFF CACHE BOOL "Kakadu SIMD acceleration forced off for EMSCRIPTEN" FORCE) # Kakadu does not support WASM-SIMD yet
+
+  SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # O3 is the highest optimization level for EMSCRIPTEN
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128") # enabled LLVM autovectoring for WASM SIMD
 else()
   if(UNIX)
-    # warnings
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function -Wno-overloaded-virtual")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto") # add link time optimizations to release build
 
-    # Use -Ofast to maximize speed
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Ofast -DNDEBUG")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    # Note - shared libraries seems to slow down kakadu on Mac OS X at least...
+    if(BUILD_SHARED_LIBS)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC") # enable position independent code for shared libraries
+    endif()
+
     EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
     message(STATUS "ARCHITECURE=${ARCHITECTURE}")
-    if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DKDU_MAC_SPEEDUPS")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # Mac
+      add_compile_definitions(KDU_MAC_SPEEDUPS)  # enables cpu specific optimizations for mac (ARM | x86)
       if(ARCHITECTURE STREQUAL "arm64")
         set(KAKADU_PLATFORM "Mac-arm-64-gcc")
       else()
         set(KAKADU_PLATFORM "Mac-x86-64-gcc")
       endif()
-    else()
+    else() # Non mac unix (linux)
       if(ARCHITECTURE STREQUAL "aarch64")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.1-a -flax-vector-conversions")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.1-a") # TODO - try removing this and see if it builds (this was taken from kakadu makefile)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flax-vector-conversions") # TODO - try compiling without this (this was taken from kakadu makefile)
         set(KAKADU_PLATFORM "Linux-arm-64-gcc")
       else()
         set(KAKADU_PLATFORM "Linux-x86-64-gcc")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DKDU_X86_INTRINSICS")
+        add_compile_definitions(KDU_X86_INTRINSICS)  # enables x86 specific optimizations
       endif()
     endif()
   elseif(WIN32)
@@ -58,17 +65,31 @@ else()
   endif()
 endif()
 
+# configure for compiler options and link directories based on SIMD Acceleration enabled or not
+if(KAKADU_SIMD_ACCELERATION) 
 
-# turn off threading
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DKDU_NO_THREADS")
+  set(KAKDU_HT_LIB "altlib_ht_opt") # this has the CPU optimized libraryes (see Enabling_HT.txt)
 
-# BUILD_SHARED_LIBS must be OFF for EMSCRIPTEN builds
-option(BUILD_SHARED_LIBS "" OFF)
+else()
+  add_compile_definitions(FBC_NO_ACCELERATION)# disable kakadu HT acceleration (see Enabling_HT.txt)
 
-# add the external library
+  set(KAKDU_HT_LIB "srclib_ht")  # this has the CPU optimized libraryes (see Enabling_HT.txt)
+endif()
+
+# enable HT mode in kakadu
+add_compile_definitions(FBC_ENABLED)
+
+# disable threads if not enabled
+if(NOT KAKADU_THREADING)
+  add_compile_definitions(KDU_NO_THREADS)
+endif()
+
+########################
+
+# add the kakadu library from extern
 add_subdirectory(extern/kakadu EXCLUDE_FROM_ALL)
 
-# add the js wrapper
+# add the library code
 add_subdirectory(src)
 
 # c++ native test case

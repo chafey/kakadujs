@@ -1,8 +1,14 @@
-
 if(EMSCRIPTEN)
+
+  # supresss warnings generated from including Kakadu headers
+  add_compile_options(-Wno-deprecated-volatile)
+  add_compile_options(-Wno-return-type)
+  add_compile_options(-Wno-tautological-constant-out-of-range-compare)
+  add_compile_options(-Wno-implicit-const-int-float-conversion)
+
   add_executable(kakadujs ${SOURCES} jslib.cpp)
   target_link_libraries(kakadujs PRIVATE libkdu)
-  target_compile_features(kakadujs PUBLIC cxx_std_17)
+  set_property(TARGET kakadujs PROPERTY CXX_STANDARD 23)
 
   set_target_properties(
       kakadujs 
