@@ -31,15 +31,12 @@ if(EMSCRIPTEN)
   SET(KAKADU_THREADING OFF CACHE BOOL "Kakadu threading forced off for EMSCRIPTEN" FORCE)  # EMSCRIPTEN threading has not been tested with kakadu yet
   SET(KAKADU_SIMD_ACCELERATION OFF CACHE BOOL "Kakadu SIMD acceleration forced off for EMSCRIPTEN" FORCE) # Kakadu does not support WASM-SIMD yet
 
-  SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # O3 is the highest optimization level for EMSCRIPTEN
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msimd128") # enabled LLVM autovectoring for WASM SIMD
+  add_compile_options(-msimd128) # enabled LLVM autovectoring for WASM SIMD
 else()
   if(UNIX)
-    #SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto") # add link time optimizations to release build
-
     # Note - shared libraries seems to slow down kakadu on Mac OS X at least...
     if(BUILD_SHARED_LIBS)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC") # enable position independent code for shared libraries
+      add_compile_options(-fPIC) # enable position independent code for shared libraries
     endif()
 
     EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
@@ -54,8 +51,8 @@ else()
       endif()
     else() # Non mac unix (linux)
       if(ARCHITECTURE STREQUAL "aarch64")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.1-a") # TODO - try removing this and see if it builds (this was taken from kakadu makefile)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flax-vector-conversions") # TODO - try compiling without this (this was taken from kakadu makefile)
+        add_compile_options(-march=armv8.1-a) # TODO - try removing this and see if it builds (this was taken from kakadu makefile)
+        add_compile_options(-flax-vector-conversions) # TODO - try compiling without this (this was taken from kakadu makefile)
         set(KAKADU_PLATFORM "Linux-arm-64-gcc")
       else()
         set(KAKADU_PLATFORM "Linux-x86-64-gcc")
