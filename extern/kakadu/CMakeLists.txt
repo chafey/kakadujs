@@ -1,12 +1,74 @@
+# Enable SIMD by default
+OPTION(KAKADU_SIMD_ACCELERATION "Enable Kakadu's heavily optimized implementation of HTJ2K" ON)
+
+# NOTE - Has not been tested yet
+option(KAKADU_THREADING "Build Kakadu with threading" OFF)
+
+# enable HT mode in kakadu
+add_compile_definitions(FBC_ENABLED)
+
+# disable threads if not enabled
+if(NOT KAKADU_THREADING)
+    add_compile_definitions(KDU_NO_THREADS)
+endif()
+
+# configure for compiler options and link directories based on SIMD Acceleration enabled or not
+if(KAKADU_SIMD_ACCELERATION) 
+    set(KAKDU_HT_LIB "altlib_ht_opt") # this has the CPU optimized libraries (see Enabling_HT.txt)
+else()
+    add_compile_definitions(FBC_NO_ACCELERATION)# disable kakadu HT acceleration (see Enabling_HT.txt)
+    set(KAKDU_HT_LIB "srclib_ht")  # this has the CPU optimized libraries (see Enabling_HT.txt)
+endif()
+
+# do platform specific stuff
+if(EMSCRIPTEN)
+    SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Shared libraries forced off for EMSCRIPTEN" FORCE)  # EMSCRIPTEN does not support shared libraries
+    SET(KAKADU_THREADING OFF CACHE BOOL "Kakadu threading forced off for EMSCRIPTEN" FORCE)  # EMSCRIPTEN threading has not been tested with kakadu yet
+    SET(KAKADU_SIMD_ACCELERATION OFF CACHE BOOL "Kakadu SIMD acceleration forced off for EMSCRIPTEN" FORCE) # Kakadu does not support WASM-SIMD yet
+
+    add_compile_options(-msimd128) # enabled LLVM autovectoring for WASM SIMD
+elseif(UNIX AND (NOT EMSCRIPTEN))
+    if(BUILD_SHARED_LIBS)
+        add_compile_options(-fPIC) # enable position independent code for shared libraries
+    endif()
+
+    # figure out what architecture we are running on
+    EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
+    message(STATUS "ARCHITECURE=${ARCHITECTURE}")
+
+    if(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # Mac
+        add_compile_definitions(KDU_MAC_SPEEDUPS)  # enables cpu specific optimizations for mac (ARM | x86)
+        if(ARCHITECTURE STREQUAL "arm64")
+            set(KAKADU_PLATFORM "Mac-arm-64-gcc")
+        else()
+            add_compile_definitions(KDU_X86_INTRINSICS) # TODO - test removing this
+            set(KAKADU_PLATFORM "Mac-x86-64-gcc")
+        endif()
+    else() # Non mac unix (linux)
+        if(ARCHITECTURE STREQUAL "aarch64")
+            add_compile_options(-march=armv8.1-a) # TODO - try removing this and see if it builds (this was taken from kakadu makefile)
+            add_compile_options(-flax-vector-conversions) # TODO - try compiling without this (this was taken from kakadu makefile)
+            set(KAKADU_PLATFORM "Linux-arm-64-gcc")
+        else()
+            set(KAKADU_PLATFORM "Linux-x86-64-gcc")
+        endif()
+    endif()
+elseif(WIN32)
+    set(ARCHITECTURE "x86_64")
+    set(KAKADU_PLATFORM "Win-x86-64")
+else()
+    message(FATAL_ERROR "Platform not supported yet" )
+endif()
 
 set(PUBLIC_HEADERS
     "${KAKADU_ROOT}/coresys/common"
     "${KAKADU_ROOT}/coresys/shared"
+)
+
+set(PUBLIC_HEADERS_APP_SUPPORT
     "${KAKADU_ROOT}/apps/support"
     "${KAKADU_ROOT}/apps/compressed_io"
 )
-
-include_directories(${PUBLIC_HEADERS})
 
 set(CODING_SOURCES
     "${KAKADU_ROOT}/coresys/coding/block_coding_common.cpp"
@@ -24,7 +86,6 @@ set(COMPRESSED_SOURCES
     "${KAKADU_ROOT}/coresys/compressed/codestream.cpp"
     "${KAKADU_ROOT}/coresys/compressed/compressed.cpp"
 )
-# v8_3 and later, remove for v8_2
 set(SHARED_SOURCES
     "${KAKADU_ROOT}/coresys/shared/core_local.cpp"
 )
@@ -79,17 +140,20 @@ set(APP_SUPPORT_SOURCES
     "${KAKADU_ROOT}/apps/client_server/kdu_client_window.cpp"
 )
 
-if(WIN32) 
+# include platform specific code
+if(WIN32)
     ENABLE_LANGUAGE(ASM_MASM)
     set(WIN32_SOURCES
         "${KAKADU_ROOT}/coresys/common/arch_masm64.asm"
-)
-elseif(UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64")
+    )
 endif()
 
+# include SIMD acelerated code
 if(KAKADU_SIMD_ACCELERATION) 
+
     if(ARCHITECTURE STREQUAL "x86_64")
+        
+        add_compile_definitions(KDU_X86_INTRINSICS) # enable x86 SIMD optimizations
 
         set(SSSE3_SOURCES
             "${KAKADU_ROOT}/coresys/coding/ssse3_coder_local.cpp" 
@@ -121,23 +185,25 @@ if(KAKADU_SIMD_ACCELERATION)
             "${KAKADU_ROOT}/apps/support/avx2_stripe_transfer.cpp"
             "${KAKADU_ROOT}/apps/support/ssse3_stripe_transfer.cpp"
         )
+
         if(UNIX)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2 -DKDU_X86_INTRINSIC -m64")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2 -mfma -mbmi -mbmi2 -mlzcnt")
+            add_compile_options(-msse2)
+            add_compile_options(-mssse3)
+            add_compile_options(-msse4.1)
+            add_compile_options(-mavx)
+            add_compile_options(-mavx2)
+            add_compile_options(-mfma)
+            add_compile_options(-mbmi)
+            add_compile_options(-mbmi2)
+            add_compile_options(-mlzcnt)
+            add_compile_options(-m64)
         endif()
 
     elseif(ARCHITECTURE STREQUAL "arm64")
 
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DKDU_NEON_INTRINSICS")
+        add_compile_definitions(KDU_NEON_INTRINSICS) # enable ARM NEON SIMD optimizations
 
         set(NEON_SOURCES
-            "${KAKADU_ROOT}/apps/support/neon_stripe_transfer.cpp"
-            "${KAKADU_ROOT}/apps/support/neon_region_decompressor.cpp"
-            "${KAKADU_ROOT}/apps/support/neon_region_compositor.cpp"
-            "${KAKADU_ROOT}/apps/image/neon_sample_reorg.cpp"
             "${KAKADU_ROOT}/coresys/coding/neon_coder_local.cpp"
             "${KAKADU_ROOT}/coresys/transform/neon_colour_local.cpp"
             "${KAKADU_ROOT}/coresys/transform/neon_dwt_local.cpp"
@@ -145,10 +211,26 @@ if(KAKADU_SIMD_ACCELERATION)
             "${KAKADU_ROOT}/coresys/transform/neon_synthesis2.cpp"
             "${KAKADU_ROOT}/coresys/transform/neon_analysis2.cpp"
         )
-    endif()
- endif()
 
-add_library (libkdu 
+        set(NEON_APP_SUPPORT
+            "${KAKADU_ROOT}/apps/support/neon_stripe_transfer.cpp"
+            "${KAKADU_ROOT}/apps/support/neon_region_decompressor.cpp"
+            "${KAKADU_ROOT}/apps/support/neon_region_compositor.cpp"
+            "${KAKADU_ROOT}/apps/image/neon_sample_reorg.cpp"
+        )
+    endif() # arm64
+endif() # KAKADU_SIMD_ACCELERATION
+
+# include non SIMD acelerated code
+if(NOT KAKADU_SIMD_ACCELERATION)
+    if(ARCHITECTURE STREQUAL "arm64")
+        add_compile_definitions("KDU_NO_NEON") # explicitly disable ARM NEON SIMD code as it gets turned on by default
+    endif()
+endif()
+
+## Kakadu Library
+
+add_library (kakadu 
     ${SHARED_SOURCES}
     ${CODING_SOURCES} 
     ${COMPRESSED_SOURCES} 
@@ -164,13 +246,33 @@ add_library (libkdu
     ${AVX_SOURCES} 
     ${AVX2_SOURCES} 
     ${AVX2_X64_SOURCES}
-    ${HT_FASTCODING_SOURCES}
-    ${APP_SUPPORT_SOURCES}
-    ${APP_SUPPORT_SOURCES_INTEL_SIMD}
     ${NEON_SOURCES}
     ${WIN32_SOURCES}
+)
+
+target_include_directories(kakadu PUBLIC ${PUBLIC_HEADERS})
+
+set_property(TARGET kakadu PROPERTY CXX_STANDARD 23)
+
+#include the platform specific kakadu ht library
+if(UNIX AND (NOT EMSCRIPTEN))
+    target_link_libraries(kakadu PRIVATE 
+        ${KAKADU_ROOT}${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/libkdu_ht.a m
     )
+elseif(WIN32) 
+    target_link_libraries(kakadu PRIVATE 
+        ${KAKADU_ROOT}${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/kdu_ht2019R.lib
+    )
+endif()
 
-target_include_directories(libkdu PUBLIC ${PUBLIC_HEADERS})
+## KakaduAppSupport library
 
-target_compile_features(libkdu PUBLIC cxx_std_20)
+add_library (kakaduappsupport
+        ${APP_SUPPORT_SOURCES}
+        ${APP_SUPPORT_SOURCES_INTEL_SIMD}
+        ${NEON_APP_SUPPORT}
+)
+
+target_link_libraries(kakaduappsupport PRIVATE kakadu)
+
+target_include_directories(kakaduappsupport PRIVATE ${PUBLIC_HEADERS} PUBLIC ${PUBLIC_HEADERS_APP_SUPPORT} )

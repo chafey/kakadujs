@@ -6,3 +6,7 @@ test/fixtures/j2c/ignore.j2c
 extern/v*
 .vs
 out
+build
+build-gcc
+build-clang
+build-emscripten

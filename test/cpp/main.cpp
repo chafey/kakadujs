@@ -8,8 +8,8 @@
 #include <time.h>
 #include <algorithm>
 
-#include "../../src/HTJ2KDecoder.hpp"
-#include "../../src/HTJ2KEncoder.hpp"
+#include <HTJ2KDecoder.hpp>
+#include <HTJ2KEncoder.hpp>
 
 #ifdef _WIN32
 #define CLOCK_PROCESS_CPUTIME_ID 0
@@ -158,16 +158,16 @@ void encodeFile(const char *inPath, const FrameInfo frameInfo, const char *outPa
 
 int main(int argc, char **argv)
 {
-    const size_t iterations = (argc > 1) ? atoi(argv[1]) : 20;
+    const size_t iterations = (argc > 1) ? atoi(argv[1]) : 2000;
 
     //  warm up the decoder and encoder
-    decodeFile("test/fixtures/j2c/CT1.j2c", 1, true);
+    decodeFile("test/fixtures/j2c/CT1.j2c", 100, true);
     encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, NULL, 1, true);
 
     // benchmark
     decodeFile("test/fixtures/j2c/CT1.j2c", iterations);
-    decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
-    encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, NULL, iterations);
+    //decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
+    //encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, NULL, iterations);
 
     // JPEG2000 color testing
     //deFile("test/fixtures/j2k/US1.j2k", 1);

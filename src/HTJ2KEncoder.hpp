@@ -214,7 +214,7 @@ public:
     else
     {
       codestream.access_siz()->parse_string("Creversible=no");
-      sprintf(param, "Qstep=%f", quantizationStep_);
+      snprintf(param, 32, "Qstep=%f", quantizationStep_);
       codestream.access_siz()->parse_string(param);
     }
 
@@ -237,10 +237,10 @@ public:
       break;
     }
 
-    sprintf(param, "Clevels=%zu", decompositions_);
+    snprintf(param,32, "Clevels=%zu", decompositions_);
     codestream.access_siz()->parse_string(param);
 
-    sprintf(param, "Cblk={%d,%d}", blockDimensions_.width, blockDimensions_.height);
+    snprintf(param, 32, "Cblk={%d,%d}", blockDimensions_.width, blockDimensions_.height);
     codestream.access_siz()->parse_string(param);
     codestream.access_siz()->finalize_all(); // Set up coding defaults
 

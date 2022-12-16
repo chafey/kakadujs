@@ -1,5 +1,5 @@
 # kakadujs
-Kakadu wrapper for medical imaging use
+Easy to use wrapper for the Kakadu JPEG2000 library
 
 Includes builds for WASM and native C/C++ on Mac/Linux/Windows
 
@@ -10,8 +10,8 @@ Experimental - use at your own risk
 ## Building
 
 This code has been developed/tested against v8_3 of Kakadu for Mac (x64/ARM), Linux (x64/ARM) and Windows (x64).  
-You must place a licensed version of the Kakadu source in the extern folder (e.g. extern/v_8_3-02044N) and update the
-variable KAKADU_ROOT in CMakeLists.txt accordingly.  
+You must place a fresh version of the Kakadu library in the extern folder (e.g. extern/v_8_3-02044N).  CMake
+will find your installation of Kakadu for you.
 
 NOTE - The CMake files are setup to automatically build with the processor SIMD optimizations without making any changes
 to the default Kakadu source distribution.  You do should NOT replace srclib_ht with altlib_ht_opt or set 
@@ -21,14 +21,38 @@ FC_BLOCK_ENABLED as described in the Kakadu/Enabling_HT.txt file.
 
 #### Linux/Mac OS X
 
-* CMake
-* C++ Compiler Toolchain (e.g. Ubuntu build-essentials, XCode command line tools)
+* CMake (v3.20)
+* C++ Compiler Toolchain (e.g. Ubuntu build-essentials, XCode command line tools v14.0.0)
+* Emscripten (v3.1.25)
 
 #### Windows
 
 * Visual Studio 2022 (Community Edition with Desktop development with C++)
 
 ### Building the native C++ version with Linux/Mac OS X
+
+This project uses CMake presets for compiler specific configuration for warning free builds
+
+clang 
+```
+$ cmake -S . -B build-clang -DCMAKE_BUILD_TYPE=Release --preset=clang
+$ cmake --build build-clang
+$ build-clang/test/cpp/cpptest
+```
+
+gcc
+```
+$ cmake -S . -B build-gcc -DCMAKE_BUILD_TYPE=Release --preset=gcc
+$ cmake --build build-gcc
+$ build-gcc/test/cpp/cpptest
+```
+
+other compiler (will result in warnings)
+```
+$ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release 
+$ cmake --build build
+$ build/test/cpp/cpptest
+```
 
 The test app in test/cpp/main.cpp will generate benchmarks for decoding and encoding.  
 
@@ -39,8 +63,7 @@ The test app in test/cpp/main.cpp will generate benchmarks for decoding and enco
 Numbers from an Apple M1 MacBook Pro running macOS Monterey 12.6.1
 
 ```
-> ./build-native.sh
-
+build/test/cpp/cpptest
 NATIVE decode test/fixtures/j2c/CT1.j2c TotalTime: 0.014 s for 20 iterations; TPF=0.692 ms (361.12 MP/s, 1444.46 FPS)
 NATIVE decode test/fixtures/j2c/MG1.j2c TotalTime: 0.744 s for 20 iterations; TPF=37.206 ms (374.94 MP/s, 26.88 FPS)
 NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.037 s for 20 iterations; TPF=1.846 ms (135.44 MP/s, 541.74 FPS)
@@ -54,8 +77,6 @@ NATIVE decode test/fixtures/j2c/CT1.j2c TotalTime: 0.009 s for 20 iterations; TP
 NATIVE decode test/fixtures/j2c/MG1.j2c TotalTime: 0.564 s for 20 iterations; TPF=28.177 ms (495.09 MP/s, 35.49 FPS)
 NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.009 s for 20 iterations; TPF=0.438 ms (570.52 MP/s, 2282.07 FPS)
 ```
-
-NOTE - lower numbers can be achieved with higher iteration counts
 
 ### Building the native C++ version with Windows/Visual Studio 2022
 
@@ -74,14 +95,19 @@ NATIVE decode test/fixtures/j2c/MG1.j2c TotalTime: 0.568 s for 20 iterations; TP
 NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.014 s for 20 iterations; TPF=0.700 ms (357.15 MP/s, 1428.61 FPS)
 ```
 
-NOTE - lower numbers can be achieved with higher iteration counts
-
 ## Building WASM version
 
-Launch docker container using Visual Studio Remote Containers and then:
+Install EMSCRIPTEN or launch the docker container using Visual Studio Code Remote Containers.  From the terminal:
 
 ```
-> ./build-wasm.sh
+$ emcmake cmake -S . -B build-emscripten -DCMAKE_BUILD_TYPE=Release  --preset=emscripten -DCMAKE_FIND_ROOT_PATH=/
+$ (cd build-emscripten; emmake make -j)
+$ build-emscripten/test/cpp/cpptest
+```
+
+
+```
+build-emscripten/test/cpp/cpptest
 WASM decode ../fixtures/j2c/CT1.j2c TotalTime: 0.100 s for 20 iterations; TPF=5.001 ms (49.99 MP/s, 199.95 FPS)
 WASM decode ../fixtures/j2c/MG1.j2c TotalTime: 4.090 s for 20 iterations; TPF=204.477 ms (68.22 MP/s, 4.89 FPS)
 WASM encode ../fixtures/raw/CT1.RAW TotalTime: 0.074 s for 20 iterations; TPF=3.710 ms (67.38 MP/s, 269.52 FPS)

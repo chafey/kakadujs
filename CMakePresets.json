@@ -1,0 +1,40 @@
+{
+    "version": 1,
+    "cmakeMinimumRequired": {
+      "major": 3,
+      "minor": 20,
+      "patch": 0
+    },
+    "configurePresets": [
+      {
+        "name": "gcc",
+        "displayName": "GCC",
+        "description": "Default build options for GCC",
+        "generator": "Unix Makefiles",
+        "binaryDir": "${sourceDir}/build-native",
+        "cacheVariables": {
+          "CMAKE_CXX_FLAGS": "-Wno-return-type -Wno-volatile -Wno-deprecated-declarations"
+        }
+      },
+      {
+        "name": "clang",
+        "displayName": "Clang",
+        "description": "Default build options for Clang",
+        "generator": "Unix Makefiles",
+        "binaryDir": "${sourceDir}/build-native",
+        "cacheVariables": {
+          "CMAKE_CXX_FLAGS": "-Wno-deprecated-volatile -Wno-return-type" 
+        }
+      },
+      {
+        "name": "emscripten",
+        "displayName": "EMSCRIPTEN",
+        "description": "Default build options for EMSCRIPTEN",
+        "generator": "Unix Makefiles",
+        "binaryDir": "${sourceDir}/build-wasm",
+        "cacheVariables": {
+          "CMAKE_CXX_FLAGS": "-Wno-deprecated-volatile -Wno-return-type -Wno-tautological-constant-out-of-range-compare -Wno-implicit-const-int-float-conversion"
+        }
+      }
+    ]
+  }
