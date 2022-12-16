@@ -8,8 +8,8 @@
 #include <time.h>
 #include <algorithm>
 
-#include "../../src/HTJ2KDecoder.hpp"
-#include "../../src/HTJ2KEncoder.hpp"
+#include <HTJ2KDecoder.hpp>
+#include <HTJ2KEncoder.hpp>
 
 #ifdef _WIN32
 #define CLOCK_PROCESS_CPUTIME_ID 0
