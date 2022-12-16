@@ -9,13 +9,13 @@ Experimental - use at your own risk
 
 ## Building
 
-This code has been developed/tested against v8_3 of Kakadu for Mac (x64/ARM), Linux (x64/ARM) and Windows (x64).  
-You must place a fresh version of the Kakadu library in the extern folder (e.g. extern/v_8_3-02044N).  CMake
-will find your installation of Kakadu for you.
+This code has been developed/tested against v8_3 of Kakadu for Mac (x64/ARM), Linux (x64/ARM) and
+Windows (x64).  You must place a fresh version of the Kakadu library in the extern folder 
+(e.g. extern/v_8_3-02044N).  CMake will find your installation of Kakadu for you.
 
-NOTE - The CMake files are setup to automatically build with the processor SIMD optimizations without making any changes
-to the default Kakadu source distribution.  You do should NOT replace srclib_ht with altlib_ht_opt or set 
-FC_BLOCK_ENABLED as described in the Kakadu/Enabling_HT.txt file.  
+NOTE - The CMake files are setup to automatically build with the processor SIMD optimizations 
+without making any changes to the default Kakadu source distribution.  You do should NOT replace
+srclib_ht with altlib_ht_opt or set FC_BLOCK_ENABLED as described in the Kakadu/Enabling_HT.txt file.  
 
 ### Prerequisites
 
