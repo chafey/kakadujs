@@ -3,7 +3,7 @@
 rm -rf build-native
 mkdir -p build-native
 #(cd build-native && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug ..)
-(cd build-native && cmake .. --preset=clang)
+(cd build-native && cmake .. --preset=gcc)
 #(cd build-native && cmake ..)
 retVal=$?
 if [ $retVal -ne 0 ]; then

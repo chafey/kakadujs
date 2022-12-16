@@ -188,17 +188,16 @@ if(KAKADU_SIMD_ACCELERATION)
         )
         # TODO: Move these to link flags?
         if(UNIX)
-            #add_compile_options(-msse2)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2 ")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfma ")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mbmi ")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mbmi2")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mlzcnt")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64")
+            add_compile_options(-msse2)
+            add_compile_options(-mssse3)
+            add_compile_options(-msse4.1)
+            add_compile_options(-mavx)
+            add_compile_options(-mavx2)
+            add_compile_options(-mfma)
+            add_compile_options(-mbmi)
+            add_compile_options(-mbmi2)
+            add_compile_options(-mlzcnt)
+            add_compile_options(-m64)
         endif()
 
     elseif(ARCHITECTURE STREQUAL "arm64")
@@ -230,6 +229,8 @@ if(NOT KAKADU_SIMD_ACCELERATION)
     endif()
 endif()
 
+## Kakadu Library
+
 add_library (kakadu 
     ${SHARED_SOURCES}
     ${CODING_SOURCES} 
@@ -257,17 +258,22 @@ set_property(TARGET kakadu PROPERTY CXX_STANDARD 23)
 #include the platform specific kakadu ht library
 if(UNIX AND (NOT EMSCRIPTEN))
     target_link_libraries(kakadu PRIVATE 
-        ${KAKADU_ROOT}/${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/libkdu_ht.a m
+        ${KAKADU_ROOT}${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/libkdu_ht.a m
     )
 elseif(WIN32) 
     target_link_libraries(kakadu PRIVATE 
-        ${KAKADU_ROOT}/${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/kdu_ht2019R.lib
+        ${KAKADU_ROOT}${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/kdu_ht2019R.lib
     )
 endif()
+
+## KakaduAppSupport library
 
 add_library (kakaduappsupport
         ${APP_SUPPORT_SOURCES}
         ${APP_SUPPORT_SOURCES_INTEL_SIMD}
         ${NEON_APP_SUPPORT}
 )
+
+target_link_libraries(kakaduappsupport PRIVATE kakadu)
+
 target_include_directories(kakaduappsupport PRIVATE ${PUBLIC_HEADERS} PUBLIC ${PUBLIC_HEADERS_APP_SUPPORT} )
