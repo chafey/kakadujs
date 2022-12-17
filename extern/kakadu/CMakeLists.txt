@@ -55,7 +55,6 @@ elseif(UNIX AND (NOT EMSCRIPTEN))
     endif()
 elseif(WIN32)
     set(ARCHITECTURE "x86_64")
-    add_compile_definitions(KDU_X86_INTRINSICS) # TODO - test removing this
     set(KAKADU_PLATFORM "Win-x86-64")
 else()
     message(FATAL_ERROR "Platform not supported yet" )
@@ -186,7 +185,7 @@ if(KAKADU_SIMD_ACCELERATION)
             "${KAKADU_ROOT}/apps/support/avx2_stripe_transfer.cpp"
             "${KAKADU_ROOT}/apps/support/ssse3_stripe_transfer.cpp"
         )
-        # TODO: Move these to link flags?
+
         if(UNIX)
             add_compile_options(-msse2)
             add_compile_options(-mssse3)
