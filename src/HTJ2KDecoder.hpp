@@ -16,7 +16,6 @@
 #include "kdu_utils.h" // Access `kdu_memsafe_mul' etc. for safe mem calcs
 #include "jp2.h"
 #include "jpx.h"
-
 #include "kdu_stripe_decompressor.h"
 
 #ifdef __EMSCRIPTEN__
@@ -218,28 +217,22 @@ public:
 private:
   void readHeader_(kdu_core::kdu_codestream &codestream, kdu_core::kdu_compressed_source_buffered &source)
   {
-    kdu_supp::kdu_compressed_source *input = &source;
-    /*
-        kdu_supp::jp2_family_src jp2_ultimate_src;
-        jp2_ultimate_src.open(&source);
-        kdu_supp::jpx_source jpx_in;
-        kdu_supp::jpx_codestream_source jpx_stream;
-        if (jpx_in.open(&jp2_ultimate_src, true) < 0)
-        {
-          jp2_ultimate_src.close();
-          input = &source;
-          source.seek(-source.get_pos());
-        }
-        else
-        {
-          printf("JPX FILE!\n");
-          jpx_stream = jpx_in.access_codestream(0);
-          input = jpx_stream.open_stream();
-        }
-    */
-    codestream.create(input);
-    // codestream.set_resilient();
-    // codestream.set_fussy(); // Set the parsing error tolerance.
+    kdu_supp::jp2_family_src jp2_ultimate_src;
+    jp2_ultimate_src.open(&source);
+    kdu_supp::jpx_source jpx_in;
+    if (jpx_in.open(&jp2_ultimate_src, true) < 0)
+    {
+      jp2_ultimate_src.close();
+      source.seek(-source.get_pos()); // rewind the source to the first byte since jp2_family_src moved it forward
+    }
+    else
+    {
+      // move to the first compositing layer
+      kdu_supp::jpx_layer_source jpx_layer = jpx_in.access_layer(0);
+    }
+
+    // Create the codestream object.
+    codestream.create(&source);
 
     // Determine number of components to decompress
     kdu_core::kdu_dims dims;
@@ -270,7 +263,6 @@ private:
   {
     kdu_core::siz_params *siz = codestream.access_siz();
     kdu_core::kdu_params *cod = siz->access_cluster(COD_params);
-    // printf("cod=%p\n", cod);
     cod->get(Clevels, 0, 0, (int &)numDecompositions_);
     cod->get(Corder, 0, 0, (int &)progressionOrder_);
     cod->get(Creversible, 0, 0, isReversible_);
@@ -288,13 +280,25 @@ private:
     kdu_supp::kdu_stripe_decompressor decompressor;
     decompressor.start(codestream);
     int stripe_heights[3] = {frameInfo_.height, frameInfo_.height, frameInfo_.height};
+
+    bool is_signed[3] = {frameInfo_.isSigned, frameInfo_.isSigned, frameInfo_.isSigned};
     if (bytesPerPixel == 1)
     {
       decompressor.pull_stripe((kdu_core::kdu_byte *)buffer, stripe_heights);
     }
     else
     {
-      decompressor.pull_stripe((kdu_core::kdu_int16 *)buffer, stripe_heights);
+      decompressor.pull_stripe(
+          (kdu_core::kdu_int16 *)buffer,
+          stripe_heights,
+          NULL,      // sample_offsets
+          NULL,      // sample_gaps
+          NULL,      // row_gaps
+          NULL,      // precisions
+          is_signed, // is_signed
+          NULL,      // pad_flags
+          0          // vectorized_store_prefs
+      );
     }
     decompressor.finish();
   }
