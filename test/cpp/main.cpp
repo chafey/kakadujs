@@ -203,8 +203,8 @@ int main(int argc, char **argv)
 
         // benchmark
         decodeFile("test/fixtures/j2c/CT1.j2c", iterations);
-        decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
-        // encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, NULL, iterations);
+        // decodeFile("test/fixtures/j2c/MG1.j2c", iterations);
+        //  encodeFile("test/fixtures/raw/CT1.RAW", {.width = 512, .height = 512, .bitsPerSample = 16, .componentCount = 1, .isSigned = true}, NULL, iterations);
 
         // JPEG2000 color testing
         // deFile("test/fixtures/j2k/US1.j2k", 1);

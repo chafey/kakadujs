@@ -4,40 +4,43 @@ OPTION(KAKADU_SIMD_ACCELERATION "Enable Kakadu's heavily optimized implementatio
 # NOTE - Has not been tested yet
 option(KAKADU_THREADING "Build Kakadu with threading" OFF)
 
-# enable HT mode in kakadu
-add_compile_definitions(FBC_ENABLED)
-
 # disable threads if not enabled
 if(NOT KAKADU_THREADING)
     add_compile_definitions(KDU_NO_THREADS)
 endif()
 
 # configure for compiler options and link directories based on SIMD Acceleration enabled or not
-if(KAKADU_SIMD_ACCELERATION) 
-    set(KAKDU_HT_LIB "altlib_ht_opt") # this has the CPU optimized libraries (see Enabling_HT.txt)
+if(KAKADU_SIMD_ACCELERATION)
+    if(EXISTS "${KAKADU_ROOT}/altlib_ht_opt/${KAKADU_PLATFORM}")
+        message("altlib_ht_opt detected") # SIMD acceleration is in altlib_ht_opt for v8_3 and trial Kakadu licenses
+        set(KAKDU_HT_LIB "altlib_ht_opt") # this has the CPU optimized libraries (see Enabling_HT.txt)
+    else()
+        set(KAKDU_HT_LIB "srclib_ht") # this has the CPU optimized libraries (see Enabling_HT.txt)
+    endif()
 else()
-    add_compile_definitions(FBC_NO_ACCELERATION)# disable kakadu HT acceleration (see Enabling_HT.txt)
-    set(KAKDU_HT_LIB "srclib_ht")  # this has the CPU optimized libraries (see Enabling_HT.txt)
+    add_compile_definitions(FBC_NO_ACCELERATION) # disable kakadu HT acceleration (see Enabling_HT.txt)
+    set(KAKDU_HT_LIB "srclib_ht") # this has the CPU optimized libraries (see Enabling_HT.txt)
 endif()
 
 # do platform specific stuff
 if(EMSCRIPTEN)
-    SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Shared libraries forced off for EMSCRIPTEN" FORCE)  # EMSCRIPTEN does not support shared libraries
-    SET(KAKADU_THREADING OFF CACHE BOOL "Kakadu threading forced off for EMSCRIPTEN" FORCE)  # EMSCRIPTEN threading has not been tested with kakadu yet
+    SET(BUILD_SHARED_LIBS OFF CACHE BOOL "Shared libraries forced off for EMSCRIPTEN" FORCE) # EMSCRIPTEN does not support shared libraries
+    SET(KAKADU_THREADING OFF CACHE BOOL "Kakadu threading forced off for EMSCRIPTEN" FORCE) # EMSCRIPTEN threading has not been tested with kakadu yet
     SET(KAKADU_SIMD_ACCELERATION OFF CACHE BOOL "Kakadu SIMD acceleration forced off for EMSCRIPTEN" FORCE) # Kakadu does not support WASM-SIMD yet
 
     add_compile_options(-msimd128) # enabled LLVM autovectoring for WASM SIMD
-elseif(UNIX AND (NOT EMSCRIPTEN))
+elseif(UNIX AND(NOT EMSCRIPTEN))
     if(BUILD_SHARED_LIBS)
         add_compile_options(-fPIC) # enable position independent code for shared libraries
     endif()
 
     # figure out what architecture we are running on
-    EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
+    EXECUTE_PROCESS(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE)
     message(STATUS "ARCHITECURE=${ARCHITECTURE}")
 
     if(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # Mac
-        add_compile_definitions(KDU_MAC_SPEEDUPS)  # enables cpu specific optimizations for mac (ARM | x86)
+        add_compile_definitions(KDU_MAC_SPEEDUPS) # enables cpu specific optimizations for mac (ARM | x86)
+
         if(ARCHITECTURE STREQUAL "arm64")
             set(KAKADU_PLATFORM "Mac-arm-64-gcc")
         else()
@@ -57,7 +60,7 @@ elseif(WIN32)
     set(ARCHITECTURE "x86_64")
     set(KAKADU_PLATFORM "Win-x86-64")
 else()
-    message(FATAL_ERROR "Platform not supported yet" )
+    message(FATAL_ERROR "Platform not supported yet")
 endif()
 
 set(PUBLIC_HEADERS
@@ -65,9 +68,17 @@ set(PUBLIC_HEADERS
     "${KAKADU_ROOT}/coresys/shared"
 )
 
+set(FBC_HEADERS
+    "${KAKADU_ROOT}/coresys/fast_coding/"
+)
+
 set(PUBLIC_HEADERS_APP_SUPPORT
     "${KAKADU_ROOT}/apps/support"
     "${KAKADU_ROOT}/apps/compressed_io"
+)
+
+set(KAKADUJS_SOURCES
+    "ensure_config.cpp" # no code, just verifies that the preprocessor definitions are correct since the defaults changed between v8_3 and v8_4_1
 )
 
 set(CODING_SOURCES
@@ -149,20 +160,18 @@ if(WIN32)
 endif()
 
 # include SIMD acelerated code
-if(KAKADU_SIMD_ACCELERATION) 
-
+if(KAKADU_SIMD_ACCELERATION)
     if(ARCHITECTURE STREQUAL "x86_64")
-        
         add_compile_definitions(KDU_X86_INTRINSICS) # enable x86 SIMD optimizations
 
         set(SSSE3_SOURCES
-            "${KAKADU_ROOT}/coresys/coding/ssse3_coder_local.cpp" 
-            "${KAKADU_ROOT}/coresys/transform/ssse3_colour_local.cpp" 
+            "${KAKADU_ROOT}/coresys/coding/ssse3_coder_local.cpp"
+            "${KAKADU_ROOT}/coresys/transform/ssse3_colour_local.cpp"
             "${KAKADU_ROOT}/coresys/transform//ssse3_dwt_local.cpp"
         )
 
         set(SSE4_SOURCES
-            "${KAKADU_ROOT}/coresys/transform/sse4_multi_transform_local.cpp" 
+            "${KAKADU_ROOT}/coresys/transform/sse4_multi_transform_local.cpp"
         )
 
         set(AVX_SOURCES
@@ -200,7 +209,6 @@ if(KAKADU_SIMD_ACCELERATION)
         endif()
 
     elseif(ARCHITECTURE STREQUAL "arm64")
-
         add_compile_definitions(KDU_NEON_INTRINSICS) # enable ARM NEON SIMD optimizations
 
         set(NEON_SOURCES
@@ -228,51 +236,52 @@ if(NOT KAKADU_SIMD_ACCELERATION)
     endif()
 endif()
 
-## Kakadu Library
+set_source_files_properties(ensure_config.cpp PROPERTIES COMPILE_FLAGS -Wno-effc++)
 
-add_library (kakadu 
+# # Kakadu Library
+add_library(kakadu
+    ${KAKADUJS_SOURCES}
     ${SHARED_SOURCES}
-    ${CODING_SOURCES} 
-    ${COMPRESSED_SOURCES} 
-    ${KERNEL_SOURCES} 
+    ${CODING_SOURCES}
+    ${COMPRESSED_SOURCES}
+    ${KERNEL_SOURCES}
     ${MESSAGING_SOURCES}
     ${PARAMETERS_SOURCES}
     ${TRANSFORM_SOURCES}
     ${ROI_SOURCES}
     ${COMMON_SOURCES}
     ${FASTCODING_SOURCES}
-    ${SSSE3_SOURCES} 
-    ${SSE4_SOURCES} 
-    ${AVX_SOURCES} 
-    ${AVX2_SOURCES} 
+    ${SSSE3_SOURCES}
+    ${SSE4_SOURCES}
+    ${AVX_SOURCES}
+    ${AVX2_SOURCES}
     ${AVX2_X64_SOURCES}
     ${NEON_SOURCES}
     ${WIN32_SOURCES}
 )
 
-target_include_directories(kakadu PUBLIC ${PUBLIC_HEADERS})
+target_include_directories(kakadu PUBLIC ${PUBLIC_HEADERS} ${FBC_HEADERS})
 
 set_property(TARGET kakadu PROPERTY CXX_STANDARD 23)
 
-#include the platform specific kakadu ht library
-if(UNIX AND (NOT EMSCRIPTEN))
-    target_link_libraries(kakadu PRIVATE 
+# include the platform specific kakadu ht library
+if(UNIX AND(NOT EMSCRIPTEN))
+    target_link_libraries(kakadu PRIVATE
         ${KAKADU_ROOT}${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/libkdu_ht.a m
     )
-elseif(WIN32) 
-    target_link_libraries(kakadu PRIVATE 
+elseif(WIN32)
+    target_link_libraries(kakadu PRIVATE
         ${KAKADU_ROOT}${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/kdu_ht2019R.lib
     )
 endif()
 
-## KakaduAppSupport library
-
-add_library (kakaduappsupport
-        ${APP_SUPPORT_SOURCES}
-        ${APP_SUPPORT_SOURCES_INTEL_SIMD}
-        ${NEON_APP_SUPPORT}
+# # KakaduAppSupport library
+add_library(kakaduappsupport
+    ${APP_SUPPORT_SOURCES}
+    ${APP_SUPPORT_SOURCES_INTEL_SIMD}
+    ${NEON_APP_SUPPORT}
 )
 
 target_link_libraries(kakaduappsupport PRIVATE kakadu)
 
-target_include_directories(kakaduappsupport PRIVATE ${PUBLIC_HEADERS} PUBLIC ${PUBLIC_HEADERS_APP_SUPPORT} )
+target_include_directories(kakaduappsupport PRIVATE ${PUBLIC_HEADERS} PUBLIC ${PUBLIC_HEADERS_APP_SUPPORT})

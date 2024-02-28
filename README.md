@@ -1,4 +1,5 @@
 # kakadujs
+
 Easy to use wrapper for the Kakadu JPEG2000 library
 
 Includes builds for WASM and native C/C++ on Mac/Linux/Windows
@@ -9,31 +10,32 @@ Experimental - use at your own risk
 
 ## Building
 
-This code has been developed/tested against v8_3 of Kakadu for Mac (x64/ARM), Linux (x64/ARM) and
-Windows (x64).  You must place a fresh version of the Kakadu library in the extern folder 
-(e.g. extern/v_8_3-02044N).  CMake will find your installation of Kakadu for you.
+This code has been developed/tested against v8_4_1 of Kakadu for Mac (x64/ARM), Linux (x64/ARM) and
+Windows (x64). You must place a fresh version of the Kakadu library in the extern folder
+(e.g. extern/v_8_4_1-02044N). CMake will find your installation of Kakadu for you.
 
-NOTE - The CMake files are setup to automatically build with the processor SIMD optimizations 
-without making any changes to the default Kakadu source distribution.  You do should NOT replace
-srclib_ht with altlib_ht_opt or set FC_BLOCK_ENABLED as described in the Kakadu/Enabling_HT.txt file.  
+NOTE - The CMake files are setup to automatically build with the processor SIMD optimizations
+without making any changes to the default Kakadu source distribution. You do should NOT replace
+srclib_ht with altlib_ht_opt or set FC_BLOCK_ENABLED as described in the Kakadu/Enabling_HT.txt file.
 
 ### Prerequisites
 
 #### Linux/Mac OS X
 
-* CMake (v3.20)
-* C++ Compiler Toolchain (e.g. Ubuntu build-essentials, XCode command line tools v14.0.0)
-* Emscripten (v3.1.25)
+- CMake (v3.20)
+- C++ Compiler Toolchain (e.g. Ubuntu build-essentials, XCode command line tools v14.0.0)
+- Emscripten (v3.1.25)
 
 #### Windows
 
-* Visual Studio 2022 (Community Edition with Desktop development with C++)
+- Visual Studio 2022 (Community Edition with Desktop development with C++)
 
 ### Building the native C++ version with Linux/Mac OS X
 
 This project uses CMake presets for compiler specific configuration for warning free builds
 
-clang 
+clang
+
 ```
 $ cmake -S . -B build-clang -DCMAKE_BUILD_TYPE=Release --preset=clang
 $ cmake --build build-clang
@@ -41,6 +43,7 @@ $ build-clang/test/cpp/cpptest
 ```
 
 gcc
+
 ```
 $ cmake -S . -B build-gcc -DCMAKE_BUILD_TYPE=Release --preset=gcc
 $ cmake --build build-gcc
@@ -48,17 +51,18 @@ $ build-gcc/test/cpp/cpptest
 ```
 
 other compiler (will result in warnings)
+
 ```
-$ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release 
+$ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 $ cmake --build build
 $ build/test/cpp/cpptest
 ```
 
-The test app in $BUILD_DIR/test/cpp/main.cpp will generate benchmarks for decoding and encoding.  
+The test app in $BUILD_DIR/test/cpp/main.cpp will generate benchmarks for decoding and encoding.
 
-* TPF = Time Per Frame/Image.
-* MP/s = Mega pixels / second
-* FPS = Frames per second decoding
+- TPF = Time Per Frame/Image.
+- MP/s = Mega pixels / second
+- FPS = Frames per second decoding
 
 Numbers from an Apple M1 MacBook Pro running macOS Monterey 12.6.1
 
@@ -81,11 +85,11 @@ NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.009 s for 20 iterations; TP
 
 ### Building the native C++ version with Windows/Visual Studio 2022
 
-Build the x64-release version.  Run cpp test from the project root directory.  
+Build the x64-release version. Run cpp test from the project root directory.
 
-* TPF = Time Per Frame/Image.
-* MP/s = Mega pixels / second
-* FPS = Frames per second decoding
+- TPF = Time Per Frame/Image.
+- MP/s = Mega pixels / second
+- FPS = Frames per second decoding
 
 Numbers from an Intel 13900K running Windows 11 Pro
 
@@ -98,7 +102,7 @@ NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.014 s for 20 iterations; TP
 
 ### Building WASM version
 
-Install EMSCRIPTEN or launch the docker container using Visual Studio Code Remote Containers.  From the terminal:
+Install EMSCRIPTEN or launch the docker container using Visual Studio Code Remote Containers. From the terminal:
 
 ```
 $ emcmake cmake -S . -B build-emscripten -DCMAKE_BUILD_TYPE=Release  --preset=emscripten -DCMAKE_FIND_ROOT_PATH=/
