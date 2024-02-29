@@ -236,8 +236,6 @@ if(NOT KAKADU_SIMD_ACCELERATION)
     endif()
 endif()
 
-set_source_files_properties(ensure_config.cpp PROPERTIES COMPILE_FLAGS -Wno-effc++)
-
 # # Kakadu Library
 add_library(kakadu
     ${KAKADUJS_SOURCES}
@@ -275,13 +273,23 @@ elseif(WIN32)
     )
 endif()
 
-# # KakaduAppSupport library
+# KakaduAppSupport library
 add_library(kakaduappsupport
     ${APP_SUPPORT_SOURCES}
     ${APP_SUPPORT_SOURCES_INTEL_SIMD}
     ${NEON_APP_SUPPORT}
 )
 
-target_link_libraries(kakaduappsupport PRIVATE kakadu)
-
 target_include_directories(kakaduappsupport PRIVATE ${PUBLIC_HEADERS} PUBLIC ${PUBLIC_HEADERS_APP_SUPPORT})
+
+# turn off specific compiler warnings depending upon the compiler
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(kakadu PRIVATE -Wno-return-type -Wno-volatile -Wno-deprecated-declarations)
+    target_compile_options(kakaduappsupport PRIVATE -Wno-return-type -Wno-volatile -Wno-deprecated-declarations)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    target_compile_options(kakadu PRIVATE -Wno-deprecated-volatile -Wno-return-type)
+    target_compile_options(kakaduappsupport PRIVATE -Wno-deprecated-volatile -Wno-return-type)
+elseif(EMSCRIPTEN)
+    target_compile_options(kakadu PRIVATE -Wno-deprecated-volatile -Wno-return-type -Wno-tautological-constant-out-of-range-compare -Wno-implicit-const-int-float-conversion)
+    target_compile_options(kakaduappsupport PRIVATE -Wno-deprecated-volatile -Wno-return-type -Wno-tautological-constant-out-of-range-compare -Wno-implicit-const-int-float-conversion)
+endif()

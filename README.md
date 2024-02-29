@@ -32,30 +32,10 @@ srclib_ht with altlib_ht_opt or set FC_BLOCK_ENABLED as described in the Kakadu/
 
 ### Building the native C++ version with Linux/Mac OS X
 
-This project uses CMake presets for compiler specific configuration for warning free builds
-
-clang
-
-```
-$ cmake -S . -B build-clang -DCMAKE_BUILD_TYPE=Release --preset=clang
-$ cmake --build build-clang
-$ build-clang/test/cpp/cpptest
-```
-
-gcc
-
-```
-$ cmake -S . -B build-gcc -DCMAKE_BUILD_TYPE=Release --preset=gcc
-$ cmake --build build-gcc
-$ build-gcc/test/cpp/cpptest
-```
-
-other compiler (will result in warnings)
-
 ```
 $ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 $ cmake --build build
-$ build/test/cpp/cpptest
+$ build-clang/test/cpp/cpptest
 ```
 
 The test app in $BUILD_DIR/test/cpp/main.cpp will generate benchmarks for decoding and encoding.
@@ -105,7 +85,7 @@ NATIVE encode test/fixtures/raw/CT1.RAW TotalTime: 0.014 s for 20 iterations; TP
 Install EMSCRIPTEN or launch the docker container using Visual Studio Code Remote Containers. From the terminal:
 
 ```
-$ emcmake cmake -S . -B build-emscripten -DCMAKE_BUILD_TYPE=Release  --preset=emscripten -DCMAKE_FIND_ROOT_PATH=/
+$ emcmake cmake -S . -B build-emscripten -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_ROOT_PATH=/
 $ (cd build-emscripten; emmake make -j)
 $ build-emscripten/test/cpp/cpptest
 ```

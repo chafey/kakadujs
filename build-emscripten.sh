@@ -3,7 +3,7 @@
 rm -rf build-wasm
 mkdir -p build-wasm
 #-DCMAKE_FIND_ROOT_PATH=/ is a workaround for find_path when run via EMSCRIPTEN emcmake
-(cd build-wasm && emcmake cmake .. --preset=emscripten -DCMAKE_FIND_ROOT_PATH=/)
+(cd build-wasm && emcmake cmake .. -DCMAKE_FIND_ROOT_PATH=/)
 if [ $retVal -ne 0 ]; then
     echo "CMAKE FAILED"
     exit 1
