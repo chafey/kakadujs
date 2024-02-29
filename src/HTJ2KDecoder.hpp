@@ -38,6 +38,8 @@ public:
   /// Constructor for decoding a HTJ2K image from JavaScript.
   /// </summary>
   HTJ2KDecoder()
+      : pEncoded_(&encodedInternal_),
+        pDecoded_(&decodedInternal_)
   {
   }
 
@@ -51,8 +53,8 @@ public:
   /// </summary>
   emscripten::val getEncodedBuffer(size_t encodedSize)
   {
-    encoded_.resize(encodedSize);
-    return emscripten::val(emscripten::typed_memory_view(encoded_.size(), encoded_.data()));
+    pDecoded_->resize(encodedSize);
+    return emscripten::val(emscripten::typed_memory_view(pDecoded_->size(), pDecoded_->data()));
   }
 
   /// <summary>
@@ -61,7 +63,7 @@ public:
   /// </summary>
   emscripten::val getDecodedBuffer()
   {
-    return emscripten::val(emscripten::typed_memory_view(decoded_.size(), decoded_.data()));
+    return emscripten::val(emscripten::typed_memory_view(pDecoded_->size(), pDecoded_->data()));
   }
 #else
   /// <summary>
@@ -70,7 +72,23 @@ public:
   /// </summary>
   std::vector<uint8_t> &getEncodedBytes()
   {
-    return encoded_;
+    return *pEncoded_;
+  }
+
+  /// <summary>
+  /// Sets a pointer to a vector containing the encoded bytes.  This can be used to avoid having to copy the encoded.  Set to 0
+  /// to reset to the internal buffer
+  /// </summary>
+  void setEncodedBytes(std::vector<uint8_t> *pEncoded)
+  {
+    if (pEncoded == 0)
+    {
+      pEncoded_ = &encodedInternal_;
+    }
+    else
+    {
+      pEncoded_ = pEncoded;
+    }
   }
 
   /// <summary>
@@ -79,8 +97,25 @@ public:
   /// </summary>
   const std::vector<uint8_t> &getDecodedBytes() const
   {
-    return decoded_;
+    return *pDecoded_;
   }
+
+  /// <summary>
+  /// Sets a pointer to a vector containing the encoded bytes.  This can be used to avoid having to copy the encoded.  Set to 0
+  /// to reset to the internal buffer
+  /// </summary>
+  void setDecodedBytes(std::vector<uint8_t> *pDecoded)
+  {
+    if (pDecoded == 0)
+    {
+      pDecoded_ = &decodedInternal_;
+    }
+    else
+    {
+      pDecoded_ = pDecoded;
+    }
+  }
+
 #endif
 
   /// <summary>
@@ -90,7 +125,7 @@ public:
   /// </summary>
   void readHeader()
   {
-    kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
+    kdu_core::kdu_compressed_source_buffered input(pEncoded_->data(), pEncoded_->size());
     kdu_core::kdu_codestream codestream;
     readHeader_(codestream, input);
     codestream.destroy();
@@ -122,7 +157,7 @@ public:
   void decode()
   {
     kdu_core::kdu_codestream codestream;
-    kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
+    kdu_core::kdu_compressed_source_buffered input(pEncoded_->data(), pEncoded_->size());
     readHeader_(codestream, input);
     decode_(codestream, input, 0);
     codestream.destroy();
@@ -138,7 +173,7 @@ public:
   void decodeSubResolution(size_t decompositionLevel)
   {
     kdu_core::kdu_codestream codestream;
-    kdu_core::kdu_compressed_source_buffered input(encoded_.data(), encoded_.size());
+    kdu_core::kdu_compressed_source_buffered input(pEncoded_->data(), pEncoded_->size());
     readHeader_(codestream, input);
     decode_(codestream, input, decompositionLevel);
     codestream.destroy();
@@ -275,8 +310,8 @@ private:
     size_t num_samples = kdu_core::kdu_memsafe_mul(frameInfo_.componentCount,
                                                    kdu_core::kdu_memsafe_mul(frameInfo_.width,
                                                                              frameInfo_.height));
-    decoded_.resize(num_samples * bytesPerPixel);
-    kdu_core::kdu_byte *buffer = decoded_.data();
+    pDecoded_->resize(num_samples * bytesPerPixel);
+    kdu_core::kdu_byte *buffer = pDecoded_->data();
     kdu_supp::kdu_stripe_decompressor decompressor;
     decompressor.start(codestream);
     int stripe_heights[3] = {frameInfo_.height, frameInfo_.height, frameInfo_.height};
@@ -303,8 +338,13 @@ private:
     decompressor.finish();
   }
 
-  std::vector<uint8_t> encoded_;
-  std::vector<uint8_t> decoded_;
+  std::vector<uint8_t> *pEncoded_;
+  std::vector<uint8_t> *pDecoded_;
+  std::vector<uint8_t> encodedInternal_;
+  std::vector<uint8_t> decodedInternal_;
+
+  // std::vector<uint8_t> encoded_;
+  // std::vector<uint8_t> decoded_;
   FrameInfo frameInfo_;
   std::vector<Point> downSamples_;
   size_t numDecompositions_;
