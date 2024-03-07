@@ -1,10 +1,7 @@
 if(EMSCRIPTEN)
-
   add_executable(kakadujs ${SOURCES} jslib.cpp)
-  
-  target_link_libraries(kakadujs PRIVATE kakadu kakaduappsupport)
 
-  set_property(TARGET kakadujs PROPERTY CXX_STANDARD 23)
+  target_link_libraries(kakadujs PRIVATE kakadu kakaduappsupport)
 
   if(KAKADU_THREADING)
     message(FATAL_ERROR "EMSCRIPTEN builds have not been tested with threading enabled yet")
@@ -13,14 +10,14 @@ if(EMSCRIPTEN)
   # Explicitly turn off Kakadu threading to prevent compile errors
   # due to kakadu not knowing about EMSCRIPTEN pthreads.  EMSCRIPTEN
   # does support threads, so this might work but it requires extra
-  # deployment work (enabling SharedArrayBuffers) and Kakadujs hasn't 
+  # deployment work (enabling SharedArrayBuffers) and Kakadujs hasn't
   # been tested with it yet
   add_compile_definitions(KDU_NO_THREADS)
-  
+
   set_target_properties(
-      kakadujs 
-      PROPERTIES 
-      LINK_FLAGS "\
+    kakadujs
+    PROPERTIES
+    LINK_FLAGS "\
         -O3 \
         -lembind \
         -s DISABLE_EXCEPTION_CATCHING=1 \
@@ -35,6 +32,7 @@ if(EMSCRIPTEN)
     ")
 
 else() # C++ header only library
-    add_library(kakadujs INTERFACE)
-    target_include_directories(kakadujs INTERFACE ".")
+  add_library(kakadujs INTERFACE)
+  target_link_libraries(kakadujs INTERFACE kakaduappsupport kakadu)
+  target_include_directories(kakadujs INTERFACE ".")
 endif()

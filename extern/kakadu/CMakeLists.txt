@@ -258,17 +258,15 @@ add_library(kakadu
     ${WIN32_SOURCES}
 )
 
-target_include_directories(kakadu PUBLIC ${PUBLIC_HEADERS} ${FBC_HEADERS})
-
-set_property(TARGET kakadu PROPERTY CXX_STANDARD 23)
+target_include_directories(kakadu PUBLIC ${PUBLIC_HEADERS} PRIVATE ${FBC_HEADERS})
 
 # include the platform specific kakadu ht library
 if(UNIX AND(NOT EMSCRIPTEN))
-    target_link_libraries(kakadu PRIVATE
+    target_link_libraries(kakadu PUBLIC
         ${KAKADU_ROOT}${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/libkdu_ht.a m
     )
 elseif(WIN32)
-    target_link_libraries(kakadu PRIVATE
+    target_link_libraries(kakadu PUBLIC
         ${KAKADU_ROOT}${KAKDU_HT_LIB}/${KAKADU_PLATFORM}/kdu_ht2019R.lib
     )
 endif()
@@ -279,8 +277,8 @@ add_library(kakaduappsupport
     ${APP_SUPPORT_SOURCES_INTEL_SIMD}
     ${NEON_APP_SUPPORT}
 )
-
-target_include_directories(kakaduappsupport PRIVATE ${PUBLIC_HEADERS} PUBLIC ${PUBLIC_HEADERS_APP_SUPPORT})
+target_include_directories(kakaduappsupport PUBLIC ${PUBLIC_HEADERS_APP_SUPPORT})
+target_link_libraries(kakaduappsupport PUBLIC kakadu)
 
 # turn off specific compiler warnings depending upon the compiler
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
